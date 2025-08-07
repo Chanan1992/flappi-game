@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>FlapPi</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: #222;
+        }
+
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+        class MenuScene extends Phaser.Scene {
+
+            constructor() {
+                super({ key: 'MenuScene' });
+            }
+
+            preload() {
+                this.load.image('rocket', 'assets/pi_rocket.png');
+                this.load.image('space', 'assets/back.png');
+            }
+
+            create() {
+                this.background;
+
+                // Achtergrond
+                this.background = this.add.tileSprite(400, 300, config.width, config.height, 'space').setScrollFactor(0);
+
+                this.add.image(400, 150, 'rocket').setScale(0.14);
+                this.add.text(400, 200, 'FlapPi', {
+                    fontSize: '48px',
+                    fill: '#fff'
+                }).setOrigin(0.5);
+
+                const startButton = this.add.text(400, 300, 'Start Game', {
+                    fontSize: '32px',
+                    fill: '#ffff00',
+                    backgroundColor: '#6A0DAD', // Pi purple
+                    padding: { x: 20, y: 10 }
+                }).setOrigin(0.5).setInteractive();
+
+                startButton.on('pointerdown', () => {
+                    this.scene.start('GameScene');
+                });
+
+                this.time.addEvent({
+                    delay: 3000, // Elke 3 seconden
+                    callback: () => this.spawnFlyingRocket(),
+                    callbackScope: this,
+                    loop: true
+                });
+
+
+                // Donate button
+                const donateButton = this.add.text(config.width - 100, 20, 'More games?\nDonate 1 Pi', {
+                    fontSize: '18px',
+                    fill: '#fff',
+                    backgroundColor: '#6A0DAD', // Pi purple
+                    padding: { x: 10, y: 5 },
+                    align: 'center'
+                }).setOrigin(0.5, 0).setInteractive();
+
+                donateButton.on('pointerdown', () => {
+                    // Placeholder for future Pi donation
+                    // if (checkPiBalance(1)) {
+                    //     deductPi(1);
+                    //     alert('Thank you for your 1 Pi donation! More features coming soon!');
+                    // } else {
+                    //     alert('Not enough Pi to donate!');
+                    // }
+                    alert('Thank you! Donation of 1 Pi would support more game features. (Not implemented yet)');
+                });
+            }
+
+            spawnFlyingRocket() {
+                const beginY = Phaser.Math.Between(50, 550);
+                const endY = Phaser.Math.Between(50, 550);
+                const dx = 1100; // 1000 - (-100)
+                const dy = endY - beginY;
+                const angleRad = Math.atan2(dy, dx);
+
+                const rocket = this.add.image(-100, beginY, 'rocket')
+                    .setScale(0.14)       // Grotere raket
+                    .setDepth(1)
+                    .setRotation(angleRad);
+
+                this.tweens.add({
+                    targets: rocket,
+                    x: 1000,
+                    y: endY,
+                    duration: Phaser.Math.Between(6000, 10000),
+                    onComplete: () => rocket.destroy()
+                });
+            }
+
+            update() {
+                console.log(this.game.actualFps);
+            }
+        }
+        class GameScene extends Phaser.Scene {
+            constructor() {
+                super({ key: 'GameScene' });
+            }
+
+            preload() {
+                // Placeholder assets (vervang met echte afbeeldingen voor productie)
+                this.load.image('rocket', 'assets/pi_rocket.png');
+                this.load.image('pipeTop', 'assets/pipe_top.png');
+                this.load.image('pipeBottom', 'assets/pipe_bottom.png');
+                this.load.image('smoke', 'assets/flamesss.png');
+                this.load.image('space', 'assets/back.png');
+                this.load.audio('flapSound', 'assets/flap.mp3');
+                this.load.audio('scoreSound', 'assets/score.mp3');
+                this.load.audio('explosionSound', 'assets/explosion.mp3');
+            }
+
+            create(data) {
+                this.pipes = []; // Array to manage pipes
+                this.score = data?.continueScore || 0; // if retry, start with old score
+                this.scoreText;
+                this.isGameOver = false;
+                this.background;
+                this.highScoreData = this.loadHighScore();
+                this.highScoreText;
+                this.retryButton;
+
+                // Achtergrond
+                this.background = this.add.tileSprite(400, 300, config.width, config.height, 'space').setScrollFactor(0);
+
+                const { width, height } = this.textures.get('rocket').getSourceImage();
+
+                this.rocket = this.matter.add.sprite(64, 64, 'rocket', null, {
+                    shape: {
+                        type: 'fromVertices',
+                        verts: [
+                            { x: -width / 2 * 0.9, y: -height / 2.5 }, // Neus linksboven
+                            { x: width / 2 * 0.4, y: -height / 5 },  // Neus rechtsboven
+                            { x: width / 2 * 0.75, y: 0 },            // Rechtervin boven
+                            { x: width / 2 * 0.4, y: height / 5 },   // Onderkant rechts
+                            { x: -width / 2 * 0.9, y: height / 2.5 },  // Onderkant links
+                            { x: -width / 2 * 0.6, y: 0 }            // Linkervin boven
+                        ],
+                        flagInternal: true,
+                    }, frictionAir: 0.05,
+                    friction: 1.0,
+                    restitution: 0.1
+                }).setScale(0.14).setOrigin(0.5);
+
+                this.rocket.setFrictionAir(0.02); // Voeg wat luchtweerstand toe voor natuurlijke rotatie
+                this.rocket.setBounce(0.2); // Kleine bounce bij collisie
+
+                // Rookeffect emitter
+                this.particles = this.add.particles('smoke');
+                this.emitter = this.particles.createEmitter({
+                    speed: 1,
+                    lifespan: 500,
+                    scale: { start: 0.05, end: 0 },
+                    alpha: { start: 0.8, end: 0 },
+                    blendMode: 'ADD',
+                    quantity: 2,
+                    on: false
+                });
+                this.emitter.startFollow(this.rocket, -25, 0); // Rook komt uit de achterkant van de raket
+
+                // Score tekst
+                this.scoreText = this.add.text(16, 48, 'Score: ' + this.score, { fontSize: '32px', fill: '#FFFFFF' }).setDepth(10);
+                this.highScoreText = this.add.text(16, 16, 'High Score: ' + this.highScoreData.score, { fontSize: '32px', fill: '#FFFFFF' }).setDepth(10);
+
+                // Input handling
+                this.input.on('pointerdown', this.flap, this);
+                this.input.keyboard.on('keydown-SPACE', this.flap, this);
+
+                // Pipes spawn timer
+                this.time.addEvent({ delay: 2000, callback: this.addPipe, callbackScope: this, loop: true });
+
+                // Collisie detectie
+                this.matter.world.on('collisionstart', (event, bodyA, bodyB) => {
+                    if ((bodyA.gameObject === this.rocket || bodyB.gameObject === this.rocket) &&
+                        (bodyA.gameObject instanceof Phaser.GameObjects.Image || bodyB.gameObject instanceof Phaser.GameObjects.Image)) {
+                        this.gameOver();
+                    }
+                });
+
+                this.flapSound = this.sound.add('flapSound');
+                this.scoreSound = this.sound.add('scoreSound', { volume: 0.5 });
+                this.explosionSound = this.sound.add('explosionSound');
+            }
+
+            loadHighScore() {
+                const savedData = localStorage.getItem('highScoreData');
+                if (savedData) {
+                    const data = JSON.parse(savedData);
+                    const check = this.md5(data.score + SECRET_KEY);
+                    if (check === data.checksum) {
+                        return data;
+                    }
+                }
+                return { score: 0, checksum: this.md5("0" + SECRET_KEY) };
+            }
+
+            saveHighScore(score) {
+                const checksum = this.md5(score + SECRET_KEY);
+                const data = { score, checksum };
+                localStorage.setItem('highScoreData', JSON.stringify(data));
+                return data;
+            }
+
+            // Simpele MD5 implementatie (voor demo, gebruik een library zoals md5.js in productie)
+            md5(str) {
+                // Dit is een placeholder, vervang door een echte MD5 library in productie
+                let hash = 0;
+                for (let i = 0; i < str.length; i++) {
+                    hash = (hash << 5) - hash + str.charCodeAt(i);
+                    hash |= 0; // Convert to 32-bit integer
+                }
+                return hash.toString(16);
+            }
+
+            update(time, delta) {
+                if (this.isGameOver) return;
+                // Check of vogel de grond raakt
+                if (this.rocket.y > this.game.config.height) {
+                    this.gameOver()
+                }
+                if (this.rocket.y < 0) {
+                    this.gameOver();
+                }
+
+                let rotation = Phaser.Math.RadToDeg(this.rocket.body.velocity.y * 0.1 * (delta / 10)); // Normalize rotation
+                rotation = Phaser.Math.Clamp(rotation, -45, 90);
+                this.rocket.setRotation(Phaser.Math.DegToRad(rotation));
+
+                // Achtergrond scrollen
+                this.background.tilePositionX += MOVE_SPEED * (delta / 1000);
+
+                // Score bijwerken als vogel pijpen passeert
+                this.pipes.forEach(pipe => {
+                    pipe.x -= MOVE_SPEED * (delta / 1000);
+                    if (!pipe.scored && pipe.x < this.rocket.x - pipe.displayWidth / 2) {
+                        pipe.scored = true;
+                        if (pipe.isTopPipe) {
+                            this.score += 1;
+                            this.scoreText.setText('Score: ' + this.score);
+                            this.scoreSound.play();
+                        }
+                    }
+                    // Remove pipe if off screen
+                    if (pipe.x < -pipe.displayWidth) {
+                        pipe.destroy();
+                        this.pipes = this.pipes.filter(p => p !== pipe);
+                    }
+                });
+            }
+
+            flap() {
+                if (!this.isGameOver) {
+                    this.rocket.setVelocityY(-5.5);
+                    this.rocket.setRotation(Phaser.Math.DegToRad(-45)); // Roteer omhoog bij flap
+                    // Activeer rookeffect en pas rotatie aan
+                    this.particles.emitters.list[0].setAngle({ min: this.rocket.angle - 20, max: this.rocket.angle + 20 });
+                    this.particles.emitters.list[0].explode();
+
+                    this.flapSound.play();
+                }
+            }
+
+            addPipe() {
+                if (this.isGameOver) return;
+
+                const gap = 600; // Vergrote afstand tussen de pijpen
+                const pipeHeight = 800 * 0.25; // Geschaalde hoogte van de pijp (209.6 pixels)
+                const minY = pipeHeight; // Minimum Y voor het midden van de gap, zodat de bovenste pijp niet boven het scherm uitkomt
+                const maxY = config.height - pipeHeight; // Maximum Y, rekening houdend met pijphoogte en gap
+                const pipeY = Phaser.Math.Between(minY, maxY);
+
+                // Bovenste pijp
+                const topPipe = this.matter.add.image(config.width, pipeY - gap / 2, 'pipeTop')
+                    .setScale(0.5)
+                    .setOrigin(0.5, 0.5)
+                    .setIgnoreGravity(true)
+                topPipe.isTopPipe = true;
+                topPipe.scored = false;
+                this.pipes.push(topPipe);
+
+                // Onderste pijp
+                const bottomPipe = this.matter.add.image(config.width, pipeY + gap / 2, 'pipeBottom')
+                    .setScale(0.5)
+                    .setOrigin(0.5, 0.5)
+                    .setIgnoreGravity(true)
+                bottomPipe.scored = false;
+                this.pipes.push(bottomPipe);
+            }
+
+            gameOver() {
+                // if (!isGameOver) {
+                this.isGameOver = true;
+                this.explosionSound.play();
+                this.matter.pause();
+                this.rocket.setTint(0xff0000);
+                this.add.text(config.width / 2, config.height / 2 - 80, 'Game Over', { fontSize: '64px', fill: '#FFFFFF' }).setOrigin(0.5);
+
+                if (this.score > this.highScoreData.score) {
+                    this.highScoreData = this.saveHighScore(this.score);
+                    this.highScoreText.setText('High score: ' + this.highScoreData.score);
+                }
+
+                // Show retry explanation
+                this.add.text(config.width / 2, config.height / 2,
+                    'Retry for 0.1 Pi and keep your current score and streak!',
+                    { fontSize: '20px', fill: '#fff', align: 'center' }).setOrigin(0.5);
+
+                // Retry button
+                const retryButton = this.add.text(config.width / 2, config.height / 2 + 80, 'Retry', {
+                    fontSize: '28px',
+                    fill: '#fff',
+                    backgroundColor: '#6A0DAD', // Pi purple
+                    padding: { x: 20, y: 10 }
+                }).setOrigin(0.5).setInteractive();
+
+                retryButton.on('pointerdown', () => {
+                    // In the future, add Pi payment logic here
+                    this.scene.restart({ continueScore: this.score });
+                    this.isGameOver = false;
+                    this.pipes = [];
+                });
+            }
+        }
+
+        const config = {
+            type: Phaser.AUTO,
+            width: 800,
+            height: 600,
+            physics: {
+                default: 'matter', // Switch to Matter.js
+                matter: {
+                    gravity: { y: 0.2 }, // Adjust gravity for Matter.js (uses a different scale)
+                    debug: true // Show hitbox for debugging
+                }
+            },
+            scene: [MenuScene, GameScene]
+        };
+
+        // Simpele geheime sleutel voor checksum (moet consistent blijven)
+        SECRET_KEY = "flappyPi2025";
+
+        MOVE_SPEED = 200; // Pixels per second
+
+        new Phaser.Game(config);
+    </script>
+</body>
+
+</html>
