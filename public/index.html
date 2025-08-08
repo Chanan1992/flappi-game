@@ -36,7 +36,16 @@
                     .setDisplaySize(this.scale.width, this.scale.height)
                     .setScrollFactor(0);
 
-                this.scale.on('resize', this.resize, this);
+                this.scale.on('resize', (gameSize) => {
+                    if (window.innerHeight < window.innerWidth) {
+                        // Landscape
+                        this.scene.pause();
+                        alert("Turn your device to vertical to resume playing!");
+                    } else {
+                        // Portrait
+                        this.scene.resume();
+                    }
+                });
 
                 this.add.image(
                     this.scale.width / 2,
@@ -73,7 +82,6 @@
                     loop: true
                 });
 
-
                 // Donate button
                 const donateButton = this.add.text(config.width - 100, 20, 'More games?\nDonate 1 Pi', {
                     fontSize: '18px',
@@ -95,16 +103,6 @@
                 });
             }
 
-            resize(gameSize) {
-                const width = gameSize.width;
-                const height = gameSize.height;
-
-                if (width === undefined || height === undefined) return;
-
-                this.cameras.resize(width, height);
-                this.background.setDisplaySize(width, height);
-            }
-
             spawnFlyingRocket() {
                 const beginY = Phaser.Math.Between(50, 550);
                 const endY = Phaser.Math.Between(50, 550);
@@ -124,10 +122,6 @@
                     duration: Phaser.Math.Between(6000, 10000),
                     onComplete: () => rocket.destroy()
                 });
-            }
-
-            update() {
-                console.log(this.game.actualFps);
             }
         }
         class GameScene extends Phaser.Scene {
@@ -163,7 +157,16 @@
                     .setDisplaySize(this.scale.width, this.scale.height)
                     .setScrollFactor(0);
 
-                this.scale.on('resize', this.resize, this);
+                this.scale.on('resize', (gameSize) => {
+                    if (window.innerHeight < window.innerWidth) {
+                        // Landscape
+                        this.scene.pause();
+                        alert("Turn your device to vertical to resume playing!");
+                    } else {
+                        // Portrait
+                        this.scene.resume();
+                    }
+                });
 
                 const { width, height } = this.textures.get('rocket').getSourceImage();
 
@@ -222,16 +225,6 @@
                 this.flapSound = this.sound.add('flapSound');
                 this.scoreSound = this.sound.add('scoreSound', { volume: 0.5 });
                 this.explosionSound = this.sound.add('explosionSound');
-            }
-
-            resize(gameSize) {
-                const width = gameSize.width;
-                const height = gameSize.height;
-
-                if (width === undefined || height === undefined) return;
-
-                this.cameras.resize(width, height);
-                this.background.setDisplaySize(width, height);
             }
 
             loadHighScore() {
