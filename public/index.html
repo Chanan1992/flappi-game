@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>FlapPi</title>
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
@@ -31,20 +31,36 @@
                 this.background;
 
                 // Achtergrond
-                this.background = this.add.tileSprite(400, 300, config.width, config.height, 'space').setScrollFactor(0);
+                this.background = this.add.image(0, 0, 'space')
+                    .setOrigin(0)
+                    .setDisplaySize(this.scale.width, this.scale.height)
+                    .setScrollFactor(0);
 
-                this.add.image(400, 150, 'rocket').setScale(0.14);
-                this.add.text(400, 200, 'FlapPi', {
-                    fontSize: '48px',
-                    fill: '#fff'
-                }).setOrigin(0.5);
+                this.scale.on('resize', this.resize, this);
 
-                const startButton = this.add.text(400, 300, 'Start Game', {
+                this.add.image(
+                    this.scale.width / 2,
+                    this.scale.height / 4,
+                    'rocket').setScale(0.14);
+                this.add.text(
+                    this.scale.width / 2,
+                    this.scale.height / 3,
+                    'FlapPi',
+                    {
+                        fontSize: '48px',
+                        fill: '#fff'
+                    }
+                ).setOrigin(0.5);
+
+                const startButton = this.add.text(
+                    this.scale.width / 2,
+                    this.scale.height / 2, 'Start Game', {
                     fontSize: '32px',
                     fill: '#ffff00',
                     backgroundColor: '#6A0DAD', // Pi purple
                     padding: { x: 20, y: 10 }
-                }).setOrigin(0.5).setInteractive();
+                }
+                ).setOrigin(0.5).setInteractive();
 
                 startButton.on('pointerdown', () => {
                     this.scene.start('GameScene');
@@ -77,6 +93,16 @@
                     // }
                     alert('Thank you! Donation of 1 Pi would support more game features. (Not implemented yet)');
                 });
+            }
+
+            resize(gameSize) {
+                const width = gameSize.width;
+                const height = gameSize.height;
+
+                if (width === undefined || height === undefined) return;
+
+                this.cameras.resize(width, height);
+                this.background.setDisplaySize(width, height);
             }
 
             spawnFlyingRocket() {
@@ -132,7 +158,12 @@
                 this.retryButton;
 
                 // Achtergrond
-                this.background = this.add.tileSprite(400, 300, config.width, config.height, 'space').setScrollFactor(0);
+                this.background = this.add.image(0, 0, 'space')
+                    .setOrigin(0)
+                    .setDisplaySize(this.scale.width, this.scale.height)
+                    .setScrollFactor(0);
+
+                this.scale.on('resize', this.resize, this);
 
                 const { width, height } = this.textures.get('rocket').getSourceImage();
 
@@ -191,6 +222,16 @@
                 this.flapSound = this.sound.add('flapSound');
                 this.scoreSound = this.sound.add('scoreSound', { volume: 0.5 });
                 this.explosionSound = this.sound.add('explosionSound');
+            }
+
+            resize(gameSize) {
+                const width = gameSize.width;
+                const height = gameSize.height;
+
+                if (width === undefined || height === undefined) return;
+
+                this.cameras.resize(width, height);
+                this.background.setDisplaySize(width, height);
             }
 
             loadHighScore() {
@@ -335,8 +376,8 @@
 
         const config = {
             type: Phaser.AUTO,
-            width: 800,
-            height: 600,
+            width: window.innerWidth,
+            height: window.innerHeight,
             physics: {
                 default: 'matter', // Switch to Matter.js
                 matter: {
@@ -345,7 +386,8 @@
                 }
             },
             scale: {
-                mode: Phaser.Scale.FIT
+                mode: Phaser.Scale.RESIZE,
+                autoCenter: Phaser.Scale.CENTER_BOTH
             },
             scene: [MenuScene, GameScene]
         };
