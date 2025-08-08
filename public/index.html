@@ -2,22 +2,14 @@
 <html>
 
 <head>
-    <meta charset="utf-8">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FlapPi</title>
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
     <style>
         body {
             margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background: #222;
-        }
-
-        canvas {
-            display: block;
         }
     </style>
 </head>
@@ -351,6 +343,9 @@
                     gravity: { y: 0.2 }, // Adjust gravity for Matter.js (uses a different scale)
                     debug: true // Show hitbox for debugging
                 }
+            },
+            scale: {
+                mode: Phaser.Scale.FIT
             },
             scene: [MenuScene, GameScene]
         };
