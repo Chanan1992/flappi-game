@@ -221,6 +221,8 @@
           this.lastTime = 0;
           this.accumulator = 0;
           this.timeStep = 1000 / 60; // 60 FPS in milliseconds
+          this.maxDelta = 1000 / 30; // Cap delta to 30 FPS (33.33ms) to prevent large jumps
+          this.previousState = null; // For interpolation
         }
 
         preload() {
@@ -334,6 +336,12 @@
           this.flapSound = this.sound.add("flapSound");
           this.scoreSound = this.sound.add("scoreSound", { volume: 0.5 });
           this.explosionSound = this.sound.add("explosionSound");
+
+          this.previousState = {
+            x: this.rocket.x,
+            y: this.rocket.y,
+            rotation: this.rocket.rotation,
+          };
         }
 
         loadHighScore() {
@@ -369,11 +377,24 @@
         update(time, delta) {
           if (this.isGameOver) return;
 
+          // Cap delta to prevent large jumps
+          delta = Math.min(delta, this.maxDelta);
+
           // Fixed time step logic
           this.accumulator += delta;
+          let alpha = 0;
+
           while (this.accumulator >= this.timeStep) {
-            this.matter.world.engine.gravity.y = 0.2; // Ensure consistent gravity
-            this.matter.world.step(this.timeStep); // Use matter.world.step instead of Engine.update
+            // Store previous state
+            this.previousState = {
+              x: this.rocket.x,
+              y: this.rocket.y,
+              rotation: this.rocket.rotation,
+            };
+
+            // Update physics
+            this.matter.world.engine.gravity.y = 0.2;
+            this.matter.world.step(this.timeStep);
             this.accumulator -= this.timeStep;
 
             // Check boundaries
@@ -383,13 +404,6 @@
             if (this.rocket.y < 0) {
               this.gameOver();
             }
-
-            // Update rotation
-            let rotation = Phaser.Math.RadToDeg(
-              this.rocket.body.velocity.y * 0.1
-            );
-            rotation = Phaser.Math.Clamp(rotation, -45, 90);
-            this.rocket.setRotation(Phaser.Math.DegToRad(rotation));
 
             // Update pipes and background with fixed step
             this.background.tilePositionX +=
@@ -413,6 +427,25 @@
               }
             });
           }
+
+          // Interpolation
+          alpha = this.accumulator / this.timeStep;
+          this.rocket.x =
+            this.previousState.x +
+            (this.rocket.x - this.previousState.x) * alpha;
+          this.rocket.y =
+            this.previousState.y +
+            (this.rocket.y - this.previousState.y) * alpha;
+          this.rocket.rotation =
+            this.previousState.rotation +
+            (this.rocket.rotation - this.previousState.rotation) * alpha;
+
+          // Update rotation based on current velocity (interpolated)
+          let rotation = Phaser.Math.RadToDeg(
+            this.rocket.body.velocity.y * 0.1
+          );
+          rotation = Phaser.Math.Clamp(rotation, -45, 90);
+          this.rocket.setRotation(Phaser.Math.DegToRad(rotation));
         }
 
         // update(time, delta) {
