@@ -534,6 +534,10 @@
 
       const config = {
         type: Phaser.AUTO,
+        fps: {
+          target: 60,
+          forceSetTimeOut: true,
+        },
         physics: {
           default: "matter", // Switch to Matter.js
           matter: {
