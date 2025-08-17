@@ -218,9 +218,6 @@
       class GameScene extends BaseScene {
         constructor() {
           super({ key: "GameScene" });
-          this.lastTime = 0;
-          this.accumulator = 0;
-          this.timeStep = 1000 / 60; // 60 FPS in milliseconds
         }
 
         preload() {
@@ -244,6 +241,9 @@
           this.highScoreData = this.loadHighScore();
           this.highScoreText;
           this.retryButton;
+          this.spawnTimer = 0;
+          this.spawnInterval = 2000;
+          this.moveSpeed = this.scale.width * 0.25; // Corrected casing and initialization
 
           // Achtergrond
           this.background = this.add
@@ -312,12 +312,12 @@
           this.input.keyboard.on("keydown-SPACE", this.flap, this);
 
           // Pipes spawn timer
-          this.time.addEvent({
-            delay: 2000,
-            callback: this.addPipe,
-            callbackScope: this,
-            loop: true,
-          });
+          // this.time.addEvent({
+          //   delay: 2000,
+          //   callback: this.addPipe,
+          //   callbackScope: this,
+          //   loop: true,
+          // });
 
           // Collisie detectie
           this.matter.world.on("collisionstart", (event, bodyA, bodyB) => {
@@ -369,89 +369,53 @@
         update(time, delta) {
           if (this.isGameOver) return;
 
-          // 🚀 Check boundaries
-          if (this.rocket.y > this.game.canvas.height) {
-            this.gameOver();
-          }
-          if (this.rocket.y < 0) {
+          // Check boundaries
+          if (this.rocket.y > this.game.canvas.height || this.rocket.y < 0) {
             this.gameOver();
           }
 
-          // 🚀 Update rotatie gebaseerd op verticale snelheid
+          // Rotation based on velocity
           let rotation = Phaser.Math.RadToDeg(
             this.rocket.body.velocity.y * 0.1
           );
           rotation = Phaser.Math.Clamp(rotation, -45, 90);
           this.rocket.setRotation(Phaser.Math.DegToRad(rotation));
 
-          // 🌌 Achtergrond scrollt framerate-onafhankelijk
-          this.background.tilePositionX += MOVE_SPEED * (delta / 1000);
+          // Background scroll
+          if (this.moveSpeed) {
+            // Safety check
+            this.background.tilePositionX += this.moveSpeed * (delta / 1000);
+          }
 
-          // 🚧 Update pipes
+          // Pipes movement
           this.pipes.forEach((pipe) => {
-            pipe.x -= MOVE_SPEED * (delta / 1000);
-
-            // Score wanneer raket voorbij top pipe gaat
+            if (this.moveSpeed) {
+              // Safety check
+              pipe.x -= this.moveSpeed * (delta / 1000);
+            }
             if (
               !pipe.scored &&
+              pipe.isTopPipe &&
               pipe.x < this.rocket.x - pipe.displayWidth / 2
             ) {
               pipe.scored = true;
-              if (pipe.isTopPipe) {
-                this.score += 1;
-                this.scoreText.setText("Score: " + this.score);
-                this.scoreSound.play();
-              }
+              this.score += 1;
+              this.scoreText.setText("Score: " + this.score);
+              this.scoreSound.play();
             }
-
-            // Pipe opruimen buiten scherm
             if (pipe.x < -pipe.displayWidth) {
               pipe.destroy();
               this.pipes = this.pipes.filter((p) => p !== pipe);
             }
           });
+
+          // Pipes spawning
+          this.spawnTimer += delta;
+          if (this.spawnTimer >= this.spawnInterval) {
+            this.addPipe();
+            this.spawnTimer -= this.spawnInterval;
+          }
         }
-
-        // update(time, delta) {
-        //   if (this.isGameOver) return;
-        //   // Check of vogel de grond raakt
-        //   if (this.rocket.y > this.game.config.height) {
-        //     this.gameOver();
-        //   }
-        //   if (this.rocket.y < 0) {
-        //     this.gameOver();
-        //   }
-
-        //   let rotation = Phaser.Math.RadToDeg(
-        //     this.rocket.body.velocity.y * 0.1 * (delta / 10)
-        //   ); // Normalize rotation
-        //   rotation = Phaser.Math.Clamp(rotation, -45, 90);
-        //   this.rocket.setRotation(Phaser.Math.DegToRad(rotation));
-
-        //   // Achtergrond scrollen
-        //   this.background.tilePositionX += MOVE_SPEED * (delta / 1000);
-
-        //   // Score bijwerken als vogel pijpen passeert
-        //   this.pipes.forEach((pipe) => {
-        //     pipe.x -= MOVE_SPEED * (delta / 1000);
-        //     if (
-        //       !pipe.scored &&
-        //       pipe.x < this.rocket.x - pipe.displayWidth / 2
-        //     ) {
-        //       pipe.scored = true;
-        //       if (pipe.isTopPipe) {
-        //         this.score += 1;
-        //         this.scoreText.setText("Score: " + this.score);
-        //         this.scoreSound.play();
-        //       }
-        //     }
-        //     // Remove pipe if off screen
-        //     if (pipe.x < -pipe.displayWidth) {
-        //       pipe.destroy();
-        //       this.pipes = this.pipes.filter((p) => p !== pipe);
-        //     }
-        //   });
-        // }
 
         flap() {
           if (!this.isGameOver) {
@@ -467,108 +431,39 @@
             this.flapSound.play();
           }
         }
+
         addPipe() {
           if (this.isGameOver) return;
 
-          const gameHeight = this.cameras.main.height; // Use camera height
-          const pipeHeight = gameHeight * (200 / 960); // Scale relative to base 960
-          const gap = gameHeight * (600 / 960); // Scale gap relative to base 960
-          const minY = pipeHeight;
-          const maxY = gameHeight - pipeHeight;
-          const pipeY = Phaser.Math.Between(minY, maxY);
+          const gameHeight = this.game.canvas.height;
+          const gameWidth = this.game.canvas.width;
+
+          const gap = gameHeight * 0.25;
+          const pipeY = Phaser.Math.Between(gap, gameHeight - gap);
+
+          const desiredPipeHeight = gameHeight * 0.25;
+          const originalPipeHeight = this.textures
+            .get("pipeTop")
+            .getSourceImage().height;
+          const scaleFactor = desiredPipeHeight / originalPipeHeight;
 
           const topPipe = this.matter.add
-            .image(this.scale.width, pipeY - gap / 2, "pipeTop")
-            .setScale((gameHeight / 960) * 0.5) // Adjust scale based on camera height
+            .image(gameWidth, pipeY - gap / 2, "pipeTop")
             .setOrigin(0.5, 0.5)
+            .setScale(scaleFactor)
             .setIgnoreGravity(true);
           topPipe.isTopPipe = true;
           topPipe.scored = false;
           this.pipes.push(topPipe);
 
           const bottomPipe = this.matter.add
-            .image(this.scale.width, pipeY + gap / 2, "pipeBottom")
-            .setScale((gameHeight / 960) * 0.5)
+            .image(gameWidth, pipeY + gap / 2, "pipeBottom")
             .setOrigin(0.5, 0.5)
+            .setScale(scaleFactor)
             .setIgnoreGravity(true);
           bottomPipe.scored = false;
           this.pipes.push(bottomPipe);
         }
-
-        // addPipe() {
-        //   if (this.isGameOver) return;
-
-        //   const pipeType = Phaser.Math.Between(0, 1); // 0 = normaal, 1 = speciale
-
-        //   if (pipeType === 0) {
-        //     // --- NORMALE SETUP (twee pijpen) ---
-        //     const gap = 600;
-        //     const pipeHeight = 800 * 0.25;
-        //     const minY = pipeHeight;
-        //     const maxY = this.scale.height - pipeHeight;
-        //     const pipeY = Phaser.Math.Between(minY, maxY);
-
-        //     // Bovenste pijp
-        //     const topPipe = this.matter.add
-        //       .image(this.scale.width, pipeY - gap / 2, "pipeTop")
-        //       .setScale(0.5)
-        //       .setOrigin(0.5, 0.5)
-        //       .setIgnoreGravity(true);
-        //     topPipe.isTopPipe = true;
-        //     topPipe.scored = false;
-        //     this.pipes.push(topPipe);
-
-        //     // Onderste pijp
-        //     const bottomPipe = this.matter.add
-        //       .image(this.scale.width, pipeY + gap / 2, "pipeBottom")
-        //       .setScale(0.5)
-        //       .setOrigin(0.5, 0.5)
-        //       .setIgnoreGravity(true);
-        //     bottomPipe.scored = false;
-        //     this.pipes.push(bottomPipe);
-        //   } else {
-        //     // --- SPECIALE SETUP (één pijp in het midden) ---
-        //     const centerY = this.scale.height / 2;
-        //     const scale = 0.5; // kleiner maken
-        //     const middlePipe = this.matter.add
-        //       .image(this.scale.width, centerY, "pipeBottom") // Je hebt hier een aparte sprite voor nodig, of hergebruik "pipeTop" of "pipeBottom"
-        //       .setScale(scale)
-        //       .setOrigin(0.5, 0.5)
-        //       .setIgnoreGravity(true);
-
-        //     middlePipe.scored = false;
-        //     this.pipes.push(middlePipe);
-        //   }
-        // }
-
-        // addPipe() {
-        //   if (this.isGameOver) return;
-
-        //   const gap = 600; // Vergrote afstand tussen de pijpen
-        //   const pipeHeight = 800 * 0.25; // Geschaalde hoogte van de pijp (209.6 pixels)
-        //   const minY = pipeHeight; // Minimum Y voor het midden van de gap, zodat de bovenste pijp niet boven het scherm uitkomt
-        //   const maxY = this.scale.height - pipeHeight; // Maximum Y, rekening houdend met pijphoogte en gap
-        //   const pipeY = Phaser.Math.Between(minY, maxY);
-
-        //   // Bovenste pijp
-        //   const topPipe = this.matter.add
-        //     .image(this.scale.width, pipeY - gap / 2, "pipeTop")
-        //     .setScale(0.5)
-        //     .setOrigin(0.5, 0.5)
-        //     .setIgnoreGravity(true);
-        //   topPipe.isTopPipe = true;
-        //   topPipe.scored = false;
-        //   this.pipes.push(topPipe);
-
-        //   // Onderste pijp
-        //   const bottomPipe = this.matter.add
-        //     .image(this.scale.width, pipeY + gap / 2, "pipeBottom")
-        //     .setScale(0.5)
-        //     .setOrigin(0.5, 0.5)
-        //     .setIgnoreGravity(true);
-        //   bottomPipe.scored = false;
-        //   this.pipes.push(bottomPipe);
-        // }
 
         gameOver() {
           // if (!isGameOver) {
@@ -625,7 +520,7 @@
         physics: {
           default: "matter", // Switch to Matter.js
           matter: {
-            gravity: { y: 0.2 }, // Adjust gravity for Matter.js (uses a different scale)
+            gravity: { y: 0.3 }, // Increased to 0.3 for faster fall
             debug: true, // Show hitbox for debugging
           },
         },
@@ -633,14 +528,6 @@
           mode: Phaser.Scale.FIT,
           width: 640,
           height: 960,
-          // min: {
-          //   width: 320,
-          //   height: 480,
-          // },
-          // max: {
-          //   width: 720,
-          //   height: 1280,
-          // },
         },
         scene: [MenuScene, GameScene],
       };
