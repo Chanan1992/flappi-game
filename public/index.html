@@ -221,8 +221,6 @@
           this.lastTime = 0;
           this.accumulator = 0;
           this.timeStep = 1000 / 60; // 60 FPS in milliseconds
-          this.maxDelta = 1000 / 30; // Cap delta to 30 FPS (33.33ms) to prevent large jumps
-          this.previousState = null; // For interpolation
         }
 
         preload() {
@@ -336,12 +334,6 @@
           this.flapSound = this.sound.add("flapSound");
           this.scoreSound = this.sound.add("scoreSound", { volume: 0.5 });
           this.explosionSound = this.sound.add("explosionSound");
-
-          this.previousState = {
-            x: this.rocket.x,
-            y: this.rocket.y,
-            rotation: this.rocket.rotation,
-          };
         }
 
         loadHighScore() {
@@ -377,75 +369,43 @@
         update(time, delta) {
           if (this.isGameOver) return;
 
-          // Cap delta to prevent large jumps
-          delta = Math.min(delta, this.maxDelta);
-
-          // Fixed time step logic
-          this.accumulator += delta;
-          let alpha = 0;
-
-          while (this.accumulator >= this.timeStep) {
-            // Store previous state
-            this.previousState = {
-              x: this.rocket.x,
-              y: this.rocket.y,
-              rotation: this.rocket.rotation,
-            };
-
-            // Update physics
-            this.matter.world.engine.gravity.y = 0.2;
-            this.matter.world.step(this.timeStep);
-            this.accumulator -= this.timeStep;
-
-            // Check boundaries
-            if (this.rocket.y > this.game.canvas.height) {
-              this.gameOver();
-            }
-            if (this.rocket.y < 0) {
-              this.gameOver();
-            }
-
-            // Update pipes and background with fixed step
-            this.background.tilePositionX +=
-              (MOVE_SPEED * this.timeStep) / 1000;
-            this.pipes.forEach((pipe) => {
-              pipe.x -= (MOVE_SPEED * this.timeStep) / 1000;
-              if (
-                !pipe.scored &&
-                pipe.x < this.rocket.x - pipe.displayWidth / 2
-              ) {
-                pipe.scored = true;
-                if (pipe.isTopPipe) {
-                  this.score += 1;
-                  this.scoreText.setText("Score: " + this.score);
-                  this.scoreSound.play();
-                }
-              }
-              if (pipe.x < -pipe.displayWidth) {
-                pipe.destroy();
-                this.pipes = this.pipes.filter((p) => p !== pipe);
-              }
-            });
+          // Check boundaries
+          if (this.rocket.y > this.game.canvas.height) {
+            this.gameOver();
+          }
+          if (this.rocket.y < 0) {
+            this.gameOver();
           }
 
-          // Interpolation
-          alpha = this.accumulator / this.timeStep;
-          this.rocket.x =
-            this.previousState.x +
-            (this.rocket.x - this.previousState.x) * alpha;
-          this.rocket.y =
-            this.previousState.y +
-            (this.rocket.y - this.previousState.y) * alpha;
-          this.rocket.rotation =
-            this.previousState.rotation +
-            (this.rocket.rotation - this.previousState.rotation) * alpha;
-
-          // Update rotation based on current velocity (interpolated)
+          // Update rotation op basis van snelheid
           let rotation = Phaser.Math.RadToDeg(
             this.rocket.body.velocity.y * 0.1
           );
           rotation = Phaser.Math.Clamp(rotation, -45, 90);
           this.rocket.setRotation(Phaser.Math.DegToRad(rotation));
+
+          // Scroll background
+          this.background.tilePositionX += MOVE_SPEED * (delta / 1000);
+
+          // Update pipes
+          this.pipes.forEach((pipe) => {
+            pipe.x -= MOVE_SPEED * (delta / 1000);
+            if (
+              !pipe.scored &&
+              pipe.x < this.rocket.x - pipe.displayWidth / 2
+            ) {
+              pipe.scored = true;
+              if (pipe.isTopPipe) {
+                this.score += 1;
+                this.scoreText.setText("Score: " + this.score);
+                this.scoreSound.play();
+              }
+            }
+            if (pipe.x < -pipe.displayWidth) {
+              pipe.destroy();
+              this.pipes = this.pipes.filter((p) => p !== pipe);
+            }
+          });
         }
 
         // update(time, delta) {
