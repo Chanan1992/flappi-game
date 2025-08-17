@@ -218,6 +218,9 @@
       class GameScene extends BaseScene {
         constructor() {
           super({ key: "GameScene" });
+          this.lastTime = 0;
+          this.accumulator = 0;
+          this.timeStep = 1000 / 60; // 60 FPS in milliseconds
         }
 
         preload() {
@@ -365,44 +368,93 @@
 
         update(time, delta) {
           if (this.isGameOver) return;
-          // Check of vogel de grond raakt
-          if (this.rocket.y > this.game.config.height) {
-            this.gameOver();
-          }
-          if (this.rocket.y < 0) {
-            this.gameOver();
-          }
 
-          let rotation = Phaser.Math.RadToDeg(
-            this.rocket.body.velocity.y * 0.1 * (delta / 10)
-          ); // Normalize rotation
-          rotation = Phaser.Math.Clamp(rotation, -45, 90);
-          this.rocket.setRotation(Phaser.Math.DegToRad(rotation));
+          // Fixed time step logic
+          this.accumulator += delta;
+          while (this.accumulator >= this.timeStep) {
+            this.matter.world.engine.gravity.y = 0.2; // Ensure consistent gravity
+            this.matter.world.step(this.timeStep); // Use matter.world.step instead of Engine.update
+            this.accumulator -= this.timeStep;
 
-          // Achtergrond scrollen
-          this.background.tilePositionX += MOVE_SPEED * (delta / 1000);
+            // Check boundaries
+            if (this.rocket.y > this.game.canvas.height) {
+              this.gameOver();
+            }
+            if (this.rocket.y < 0) {
+              this.gameOver();
+            }
 
-          // Score bijwerken als vogel pijpen passeert
-          this.pipes.forEach((pipe) => {
-            pipe.x -= MOVE_SPEED * (delta / 1000);
-            if (
-              !pipe.scored &&
-              pipe.x < this.rocket.x - pipe.displayWidth / 2
-            ) {
-              pipe.scored = true;
-              if (pipe.isTopPipe) {
-                this.score += 1;
-                this.scoreText.setText("Score: " + this.score);
-                this.scoreSound.play();
+            // Update rotation
+            let rotation = Phaser.Math.RadToDeg(
+              this.rocket.body.velocity.y * 0.1
+            );
+            rotation = Phaser.Math.Clamp(rotation, -45, 90);
+            this.rocket.setRotation(Phaser.Math.DegToRad(rotation));
+
+            // Update pipes and background with fixed step
+            this.background.tilePositionX +=
+              (MOVE_SPEED * this.timeStep) / 1000;
+            this.pipes.forEach((pipe) => {
+              pipe.x -= (MOVE_SPEED * this.timeStep) / 1000;
+              if (
+                !pipe.scored &&
+                pipe.x < this.rocket.x - pipe.displayWidth / 2
+              ) {
+                pipe.scored = true;
+                if (pipe.isTopPipe) {
+                  this.score += 1;
+                  this.scoreText.setText("Score: " + this.score);
+                  this.scoreSound.play();
+                }
               }
-            }
-            // Remove pipe if off screen
-            if (pipe.x < -pipe.displayWidth) {
-              pipe.destroy();
-              this.pipes = this.pipes.filter((p) => p !== pipe);
-            }
-          });
+              if (pipe.x < -pipe.displayWidth) {
+                pipe.destroy();
+                this.pipes = this.pipes.filter((p) => p !== pipe);
+              }
+            });
+          }
         }
+
+        // update(time, delta) {
+        //   if (this.isGameOver) return;
+        //   // Check of vogel de grond raakt
+        //   if (this.rocket.y > this.game.config.height) {
+        //     this.gameOver();
+        //   }
+        //   if (this.rocket.y < 0) {
+        //     this.gameOver();
+        //   }
+
+        //   let rotation = Phaser.Math.RadToDeg(
+        //     this.rocket.body.velocity.y * 0.1 * (delta / 10)
+        //   ); // Normalize rotation
+        //   rotation = Phaser.Math.Clamp(rotation, -45, 90);
+        //   this.rocket.setRotation(Phaser.Math.DegToRad(rotation));
+
+        //   // Achtergrond scrollen
+        //   this.background.tilePositionX += MOVE_SPEED * (delta / 1000);
+
+        //   // Score bijwerken als vogel pijpen passeert
+        //   this.pipes.forEach((pipe) => {
+        //     pipe.x -= MOVE_SPEED * (delta / 1000);
+        //     if (
+        //       !pipe.scored &&
+        //       pipe.x < this.rocket.x - pipe.displayWidth / 2
+        //     ) {
+        //       pipe.scored = true;
+        //       if (pipe.isTopPipe) {
+        //         this.score += 1;
+        //         this.scoreText.setText("Score: " + this.score);
+        //         this.scoreSound.play();
+        //       }
+        //     }
+        //     // Remove pipe if off screen
+        //     if (pipe.x < -pipe.displayWidth) {
+        //       pipe.destroy();
+        //       this.pipes = this.pipes.filter((p) => p !== pipe);
+        //     }
+        //   });
+        // }
 
         flap() {
           if (!this.isGameOver) {
