@@ -369,7 +369,7 @@
         update(time, delta) {
           if (this.isGameOver) return;
 
-          // Check boundaries
+          // 🚀 Check boundaries
           if (this.rocket.y > this.game.canvas.height) {
             this.gameOver();
           }
@@ -377,19 +377,21 @@
             this.gameOver();
           }
 
-          // Update rotation op basis van snelheid
+          // 🚀 Update rotatie gebaseerd op verticale snelheid
           let rotation = Phaser.Math.RadToDeg(
             this.rocket.body.velocity.y * 0.1
           );
           rotation = Phaser.Math.Clamp(rotation, -45, 90);
           this.rocket.setRotation(Phaser.Math.DegToRad(rotation));
 
-          // Scroll background
+          // 🌌 Achtergrond scrollt framerate-onafhankelijk
           this.background.tilePositionX += MOVE_SPEED * (delta / 1000);
 
-          // Update pipes
+          // 🚧 Update pipes
           this.pipes.forEach((pipe) => {
             pipe.x -= MOVE_SPEED * (delta / 1000);
+
+            // Score wanneer raket voorbij top pipe gaat
             if (
               !pipe.scored &&
               pipe.x < this.rocket.x - pipe.displayWidth / 2
@@ -401,6 +403,8 @@
                 this.scoreSound.play();
               }
             }
+
+            // Pipe opruimen buiten scherm
             if (pipe.x < -pipe.displayWidth) {
               pipe.destroy();
               this.pipes = this.pipes.filter((p) => p !== pipe);
