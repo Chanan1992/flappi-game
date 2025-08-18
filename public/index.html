@@ -449,37 +449,86 @@
           }
         }
 
+        // addPipe() {
+        //   if (this.isGameOver) return;
+
+        //   const gameHeight = this.game.canvas.height;
+        //   const gameWidth = this.game.canvas.width;
+
+        //   const gap = gameHeight * 0.25;
+        //   const pipeY = Phaser.Math.Between(gap, gameHeight - gap);
+
+        //   const desiredPipeHeight = gameHeight * 0.4;
+        //   const originalPipeHeight = this.textures
+        //     .get("pipeTop")
+        //     .getSourceImage().height;
+        //   const scaleFactor = desiredPipeHeight / originalPipeHeight;
+
+        //   const topPipe = this.matter.add
+        //     .image(gameWidth, pipeY - gap / 2, "pipeTop")
+        //     .setOrigin(0.5, 0.5)
+        //     .setScale(scaleFactor)
+        //     .setIgnoreGravity(true);
+        //   topPipe.isTopPipe = true;
+        //   topPipe.scored = false;
+        //   this.pipes.push(topPipe);
+
+        //   const bottomPipe = this.matter.add
+        //     .image(gameWidth, pipeY + gap / 2, "pipeBottom")
+        //     .setOrigin(0.5, 0.5)
+        //     .setScale(scaleFactor)
+        //     .setIgnoreGravity(true);
+        //   bottomPipe.scored = false;
+        //   this.pipes.push(bottomPipe);
+        // }
+
         addPipe() {
           if (this.isGameOver) return;
 
           const gameHeight = this.game.canvas.height;
           const gameWidth = this.game.canvas.width;
 
-          const gap = gameHeight * 0.25;
-          const pipeY = Phaser.Math.Between(gap, gameHeight - gap);
+          const gap = 240;
+          const minY = gap / 2 + 100;
+          const maxY = gameHeight - gap / 2 - 100;
+          const pipeY = Phaser.Math.Between(minY, maxY);
 
+          const originalPipeHeight = 800;
           const desiredPipeHeight = gameHeight * 0.25;
-          const originalPipeHeight = this.textures
-            .get("pipeTop")
-            .getSourceImage().height;
           const scaleFactor = desiredPipeHeight / originalPipeHeight;
+          const scaledPipeHeight = originalPipeHeight * scaleFactor;
+          const scaledPipeWidth = 167 * scaleFactor;
+
+          const topPipeY = pipeY - gap / 2 - scaledPipeHeight / 2;
+          const bottomPipeY = pipeY + gap / 2 + scaledPipeHeight / 2;
 
           const topPipe = this.matter.add
-            .image(gameWidth, pipeY - gap / 2, "pipeTop")
+            .image(gameWidth, 0.45 * 400, "pipeTop")
             .setOrigin(0.5, 0.5)
-            .setScale(scaleFactor)
+            .setScale(0.45)
             .setIgnoreGravity(true);
           topPipe.isTopPipe = true;
           topPipe.scored = false;
           this.pipes.push(topPipe);
 
           const bottomPipe = this.matter.add
-            .image(gameWidth, pipeY + gap / 2, "pipeBottom")
+            .image(gameWidth, gameHeight - 0.45 * 400, "pipeBottom")
             .setOrigin(0.5, 0.5)
-            .setScale(scaleFactor)
+            .setScale(0.45)
             .setIgnoreGravity(true);
           bottomPipe.scored = false;
           this.pipes.push(bottomPipe);
+
+          console.log(
+            "Top Pipe Y:",
+            topPipeY,
+            "Bottom Pipe Y:",
+            bottomPipeY,
+            "Gap:",
+            bottomPipeY - topPipeY - scaledPipeHeight,
+            "Scaled Height:",
+            scaledPipeHeight
+          );
         }
 
         gameOver() {
