@@ -123,19 +123,6 @@
             )
             .setScrollFactor(0);
 
-          // screen.orientation.lock("portrait");
-
-          // this.scale.on('resize', (gameSize) => {
-          //     if (window.innerHeight < window.innerWidth) {
-          //         // Landscape
-          //         this.scene.pause();
-          //         alert("Turn your device to vertical to resume playing!");
-          //     } else {
-          //         // Portrait
-          //         this.scene.resume();
-          //     }
-          // });
-
           this.add
             .image(this.scale.width / 2, this.scale.height / 4, "rocket")
             .setScale(0.14);
@@ -223,8 +210,8 @@
         preload() {
           // Placeholder assets (vervang met echte afbeeldingen voor productie)
           this.load.image("rocket", "assets/pi_rocket.png");
-          this.load.image("pipeTop", "assets/pipe_top.png");
-          this.load.image("pipeBottom", "assets/pipe_bottom.png");
+          this.load.image("pipeTop", "assets/pipe_top_long.png");
+          this.load.image("pipeBottom", "assets/pipe_bottom_long.png");
           this.load.image("smoke", "assets/flamesss.png");
           this.load.image("space", "assets/back.png");
           this.load.audio("flapSound", "assets/flap.mp3");
@@ -244,6 +231,19 @@
           this.spawnTimer = 0;
           this.spawnInterval = 2000;
           this.moveSpeed = this.scale.width * 0.25; // Corrected casing and initialization
+
+          this.matter.world.setBounds(
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            {
+              left: true,
+              right: true,
+              top: false,
+              bottom: false,
+            }
+          );
 
           // Achtergrond
           this.background = this.add
@@ -311,14 +311,6 @@
           this.input.on("pointerdown", this.flap, this);
           this.input.keyboard.on("keydown-SPACE", this.flap, this);
 
-          // Pipes spawn timer
-          // this.time.addEvent({
-          //   delay: 2000,
-          //   callback: this.addPipe,
-          //   callbackScope: this,
-          //   loop: true,
-          // });
-
           // Collisie detectie
           this.matter.world.on("collisionstart", (event, bodyA, bodyB) => {
             if (
@@ -337,12 +329,6 @@
 
           // Set a fixed time step for Matter.js to ensure consistency
           this.matter.world.engine.timing.timeScale = 1; // Default time scale
-          this.matter.world.setBounds(
-            -150,
-            -50,
-            this.scale.width + 300,
-            this.scale.height + 100
-          ); // Ensure bounds are set
         }
 
         loadHighScore() {
@@ -449,39 +435,6 @@
           }
         }
 
-        // addPipe() {
-        //   if (this.isGameOver) return;
-
-        //   const gameHeight = this.game.canvas.height;
-        //   const gameWidth = this.game.canvas.width;
-
-        //   const gap = gameHeight * 0.25;
-        //   const pipeY = Phaser.Math.Between(gap, gameHeight - gap);
-
-        //   const desiredPipeHeight = gameHeight * 0.4;
-        //   const originalPipeHeight = this.textures
-        //     .get("pipeTop")
-        //     .getSourceImage().height;
-        //   const scaleFactor = desiredPipeHeight / originalPipeHeight;
-
-        //   const topPipe = this.matter.add
-        //     .image(gameWidth, pipeY - gap / 2, "pipeTop")
-        //     .setOrigin(0.5, 0.5)
-        //     .setScale(scaleFactor)
-        //     .setIgnoreGravity(true);
-        //   topPipe.isTopPipe = true;
-        //   topPipe.scored = false;
-        //   this.pipes.push(topPipe);
-
-        //   const bottomPipe = this.matter.add
-        //     .image(gameWidth, pipeY + gap / 2, "pipeBottom")
-        //     .setOrigin(0.5, 0.5)
-        //     .setScale(scaleFactor)
-        //     .setIgnoreGravity(true);
-        //   bottomPipe.scored = false;
-        //   this.pipes.push(bottomPipe);
-        // }
-
         addPipe() {
           if (this.isGameOver) return;
 
@@ -489,34 +442,41 @@
           const gameWidth = this.game.canvas.width;
 
           const gap = 240;
-          const minY = gap / 2 + 100;
-          const maxY = gameHeight - gap / 2 - 100;
+          const minY = -100;
+          const maxY = (gameHeight - gap) / 2 - 250;
           const pipeY = Phaser.Math.Between(minY, maxY);
 
-          const originalPipeHeight = 800;
-          const desiredPipeHeight = gameHeight * 0.25;
-          const scaleFactor = desiredPipeHeight / originalPipeHeight;
-          const scaledPipeHeight = originalPipeHeight * scaleFactor;
-          const scaledPipeWidth = 167 * scaleFactor;
+          const topPipeY = pipeY;
+          const bottomPipeY = pipeY + gap;
 
-          const topPipeY = pipeY - gap / 2 - scaledPipeHeight / 2;
-          const bottomPipeY = pipeY + gap / 2 + scaledPipeHeight / 2;
+          this.matter.world.setBounds(
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            {
+              left: true,
+              right: true,
+              top: false,
+              bottom: false,
+            }
+          );
 
           const topPipe = this.matter.add
-            .image(gameWidth, 0.45 * 400, "pipeTop")
+            .image(gameWidth, pipeY, "pipeTop")
             .setOrigin(0.5, 0.5)
-            .setScale(0.45)
+            .setDisplaySize(167 / 2, 1303 / 2)
             .setIgnoreGravity(true);
-          topPipe.isTopPipe = true;
-          topPipe.scored = false;
+          topPipe.body.ignoreWorldBounds = true;
           this.pipes.push(topPipe);
 
           const bottomPipe = this.matter.add
-            .image(gameWidth, gameHeight - 0.45 * 400, "pipeBottom")
+            .image(gameWidth, bottomPipeY + 1303 / 3.33 + gap, "pipeBottom")
             .setOrigin(0.5, 0.5)
-            .setScale(0.45)
+            .setDisplaySize(167 / 2, 1303 / 2)
             .setIgnoreGravity(true);
           bottomPipe.scored = false;
+          bottomPipe.body.ignoreWorldBounds = true;
           this.pipes.push(bottomPipe);
 
           console.log(
@@ -525,9 +485,7 @@
             "Bottom Pipe Y:",
             bottomPipeY,
             "Gap:",
-            bottomPipeY - topPipeY - scaledPipeHeight,
-            "Scaled Height:",
-            scaledPipeHeight
+            bottomPipeY - topPipeY
           );
         }
 
