@@ -468,6 +468,8 @@
             .setDisplaySize(167 / 2, 1303 / 2)
             .setIgnoreGravity(true);
           topPipe.body.ignoreWorldBounds = true;
+          topPipe.scored = false;
+          topPipe.isTopPipe = true;
           this.pipes.push(topPipe);
 
           const bottomPipe = this.matter.add
@@ -496,10 +498,15 @@
           this.matter.pause();
           this.rocket.setTint(0xff0000);
           this.add
-            .text(config.width / 2, config.height / 2 - 80, "Game Over", {
-              fontSize: "64px",
-              fill: "#FFFFFF",
-            })
+            .text(
+              this.scale.width / 2,
+              this.scale.height / 2 - 80,
+              "Game Over",
+              {
+                fontSize: "64px",
+                fill: "#FFFFFF",
+              }
+            )
             .setOrigin(0.5);
 
           if (this.score > this.highScoreData.score) {
@@ -512,16 +519,16 @@
           // Show retry explanation
           this.add
             .text(
-              config.width / 2,
-              config.height / 2,
+              this.scale.width / 2,
+              this.scale.height / 2,
               "Retry for 0.1 Pi and keep your current score and streak!",
-              { fontSize: "20px", fill: "#fff", align: "center" }
+              { fontSize: "16px", fill: "#fff", align: "center" }
             )
             .setOrigin(0.5);
 
           // Retry button
           const retryButton = this.add
-            .text(config.width / 2, config.height / 2 + 80, "Retry", {
+            .text(this.scale.width / 2, this.scale.height / 2 + 80, "Retry", {
               fontSize: "28px",
               fill: "#fff",
               backgroundColor: "#6A0DAD", // Pi purple
