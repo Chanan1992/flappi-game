@@ -42,62 +42,6 @@
         constructor(key) {
           super(key);
         }
-
-        // init() {
-        //   // Initialize resize and orientation listeners
-        //   // if (!this.game.hasEventListener) {
-        //   //   this.game.hasEventListener = true;
-        //   //   window.addEventListener("resize", () => this.resize());
-        //   // }
-        //   // this.resize();
-        // }
-
-        // create() {
-        //   const width = this.scale.gameSize.width;
-        //   const height = this.scale.gameSize.height;
-
-        //   this.parent = new Phaser.Structs.Size(width, height);
-        //   this.sizer = new Phaser.Structs.Size(
-        //     this.GAME_WIDTH,
-        //     this.GAME_HEIGHT,
-        //     Phaser.Structs.Size.FIT,
-        //     this.parent
-        //   );
-
-        //   this.parent.setSize(width, height);
-        //   this.sizer.setSize(width, height);
-        //   this.updateCamera();
-        //   this.scale.on("resize", this.resize, this);
-        // }
-
-        // resize(gameSize) {
-        //   const width = gameSize.width;
-        //   const height = gameSize.height;
-
-        //   this.parent.setSize(width, height);
-        //   this.sizer.setSize(width, height);
-
-        //   this.updateCamera();
-        // }
-
-        // updateCamera() {
-        //   const camera = this.cameras.main;
-
-        //   const x = Math.ceil((this.parent.width - this.sizer.width) * 0.5);
-        //   const y = 0;
-        //   const scaleX = this.sizer.width / this.GAME_WIDTH;
-        //   const scaleY = this.sizer.height / this.GAME_HEIGHT;
-
-        //   camera.setViewport(x, y, this.sizer.width, this.sizer.height);
-        //   camera.setZoom(Math.max(scaleX, scaleY));
-        //   camera.centerOn(this.GAME_WIDTH / 2, this.GAME_HEIGHT / 2);
-
-        //   this.backgroundScene.updateCamera();
-        // }
-
-        // getZoom() {
-        //   return this.cameras.main.zoom;
-        // }
       }
 
       class MenuScene extends BaseScene {
@@ -144,7 +88,10 @@
             .setInteractive();
 
           startButton.on("pointerdown", () => {
-            this.scene.start("GameScene");
+            this.scene.start("GameScene", {
+              retryUsed: false,
+              continueScore: 0,
+            });
           });
 
           this.time.addEvent({
@@ -156,7 +103,7 @@
 
           // Donate button
           const donateButton = this.add
-            .text(config.width - 100, 20, "More games?\nDonate 1 Pi", {
+            .text(this.scale.width - 100, 20, "More games?\nDonate 1 Pi", {
               fontSize: "18px",
               fill: "#fff",
               backgroundColor: "#6A0DAD", // Pi purple
@@ -207,6 +154,11 @@
           super({ key: "GameScene" });
         }
 
+        init(data) {
+          this.retryUsed = data?.retryUsed || false;
+          this.continueScore = data?.continueScore || 0;
+        }
+
         preload() {
           // Placeholder assets (vervang met echte afbeeldingen voor productie)
           this.load.image("rocket", "assets/pi_rocket.png");
@@ -221,9 +173,13 @@
 
         create(data) {
           this.pipes = []; // Array to manage pipes
+
           this.score = data?.continueScore || 0; // if retry, start with old score
           this.scoreText;
+
+          this.retryUsed = data.retryUsed || false;
           this.isGameOver = false;
+
           this.background;
           this.highScoreData = this.loadHighScore();
           this.highScoreText;
@@ -516,32 +472,62 @@
             );
           }
 
-          // Show retry explanation
-          this.add
+          if (!this.retryUsed) {
+            // Show retry explanation
+            this.add
+              .text(
+                this.scale.width / 2,
+                this.scale.height / 2,
+                "Retry for 0.1 Pi and keep your current score and streak!",
+                { fontSize: "16px", fill: "#fff", align: "center" }
+              )
+              .setOrigin(0.5);
+
+            // Retry button
+            const retryButton = this.add
+              .text(
+                this.scale.width / 2,
+                this.scale.height / 2 + 80,
+                "Buy retry",
+                {
+                  fontSize: "28px",
+                  fill: "#fff",
+                  backgroundColor: "#6A0DAD", // Pi purple
+                  padding: { x: 20, y: 10 },
+                }
+              )
+              .setOrigin(0.5)
+              .setInteractive();
+
+            retryButton.on("pointerdown", () => {
+              // In the future, add Pi payment logic here
+              this.scene.restart({
+                continueScore: this.score,
+                retryUsed: true,
+              });
+              this.isGameOver = false;
+              this.pipes = [];
+            });
+          }
+
+          // Main menu button
+          const mainMenuButton = this.add
             .text(
               this.scale.width / 2,
-              this.scale.height / 2,
-              "Retry for 0.1 Pi and keep your current score and streak!",
-              { fontSize: "16px", fill: "#fff", align: "center" }
+              this.scale.height / 2 + 180,
+              "Back to main menu",
+              {
+                fontSize: "28px",
+                fill: "#fff",
+                backgroundColor: "#6A0DAD", // Pi purple
+                padding: { x: 20, y: 10 },
+              }
             )
-            .setOrigin(0.5);
-
-          // Retry button
-          const retryButton = this.add
-            .text(this.scale.width / 2, this.scale.height / 2 + 80, "Retry", {
-              fontSize: "28px",
-              fill: "#fff",
-              backgroundColor: "#6A0DAD", // Pi purple
-              padding: { x: 20, y: 10 },
-            })
             .setOrigin(0.5)
             .setInteractive();
 
-          retryButton.on("pointerdown", () => {
-            // In the future, add Pi payment logic here
-            this.scene.restart({ continueScore: this.score });
-            this.isGameOver = false;
-            this.pipes = [];
+          mainMenuButton.on("pointerdown", () => {
+            this.scene.start("MenuScene");
           });
         }
       }
@@ -556,7 +542,7 @@
           default: "matter", // Switch to Matter.js
           matter: {
             gravity: { y: 0.3 }, // Increased to 0.3 for faster fall
-            debug: true, // Show hitbox for debugging
+            debug: false, // Show hitbox for debugging
           },
         },
         scale: {
