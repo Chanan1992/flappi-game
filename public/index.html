@@ -470,6 +470,7 @@
             this.highScoreText.setText(
               "High score: " + this.highScoreData.score
             );
+            this.postScore(this.score);
           }
 
           if (!this.retryUsed) {
@@ -529,6 +530,23 @@
           mainMenuButton.on("pointerdown", () => {
             this.scene.start("MenuScene");
           });
+        }
+
+        async postScore(score) {
+          try {
+            await fetch("/api/score", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                player: "anonymous", // hier kun je later Pi-username gebruiken
+                score: score,
+              }),
+            });
+          } catch (err) {
+            console.error("Fout bij posten score:", err);
+          }
         }
       }
 
