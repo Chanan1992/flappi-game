@@ -237,7 +237,7 @@
 
         async fetchLeaderboard() {
           try {
-            const res = await fetch("/leaderboard");
+            const res = await fetch("/api/score/leaderboard");
             return await res.json();
           } catch (err) {
             console.error("Failed to fetch leaderboard", err);
