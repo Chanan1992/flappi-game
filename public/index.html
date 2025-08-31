@@ -189,35 +189,52 @@
           this.add
             .text(this.scale.width / 2, 50, "🏆 Leaderboard", {
               fontSize: "42px",
-              fill: "#ffffff",
-              backgroundColor: "#6A0DAD", // Pi purple
-              padding: { x: 20, y: 10 },
+              fill: "#ffff00",
             })
             .setOrigin(0.5);
 
           // Data ophalen
           const leaderboard = await this.fetchLeaderboard();
 
-          // Scores tonen
-          if (leaderboard && leaderboard.length > 0) {
-            leaderboard.forEach((entry, index) => {
-              this.add
-                .text(
-                  this.scale.width / 2,
-                  120 + index * 40,
-                  `${index + 1}. ${entry.player} - ${entry.score}`,
-                  { fontSize: "28px", fill: "#fff" }
-                )
-                .setOrigin(0.5);
-            });
-          } else {
-            this.add
-              .text(this.scale.width / 2, 200, "No scores yet!", {
-                fontSize: "28px",
-                fill: "#fff",
-              })
-              .setOrigin(0.5);
-          }
+          // Container met alle scores
+          this.content = this.add.container(0, 120);
+
+          leaderboard.forEach((entry, index) => {
+            const scoreText = this.add
+              .text(
+                this.scale.width / 2,
+                index * 40,
+                `${index + 1}. ${entry.player} - ${entry.score}`,
+                { fontSize: "28px", fill: "#fff" }
+              )
+              .setOrigin(0.5, 0);
+            this.content.add(scoreText);
+          });
+
+          // Mask zodat alleen een deel zichtbaar is (scroll-venster van 400px hoog)
+          const maskShape = this.add.graphics();
+          maskShape.fillStyle(0xffffff);
+          maskShape.fillRect(0, 120, this.scale.width, this.scale.height / 1.4);
+          maskShape.setVisible(false); // niet meer zichtbaar!
+          this.content.setMask(maskShape.createGeometryMask());
+
+          // Scrollen met muiswiel
+          this.input.on("wheel", (pointer, gameObjects, dx, dy) => {
+            this.scrollContent(dy);
+          });
+
+          // Scrollen met touch drag (voor mobiel)
+          this.input.on("pointerdown", (pointer) => {
+            this.startY = pointer.y;
+            this.startContentY = this.content.y;
+          });
+
+          this.input.on("pointermove", (pointer) => {
+            if (pointer.isDown) {
+              const deltaY = pointer.y - this.startY;
+              this.scrollContent(-deltaY, this.startContentY);
+            }
+          });
 
           // Terugknop naar Menu
           const backButton = this.add
@@ -243,6 +260,17 @@
             console.error("Failed to fetch leaderboard", err);
             return [];
           }
+        }
+
+        scrollContent(dy, baseY = this.content.y) {
+          const contentHeight = this.content.list.length * 40;
+          const viewHeight = 400;
+
+          this.content.y = Phaser.Math.Clamp(
+            baseY - dy,
+            -(contentHeight - viewHeight),
+            120
+          );
         }
       }
 
