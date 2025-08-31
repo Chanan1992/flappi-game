@@ -80,7 +80,7 @@
           const startButton = this.add
             .text(this.scale.width / 2, this.scale.height / 2, "Start Game", {
               fontSize: "32px",
-              fill: "#ffff00",
+              fill: "#ffffff",
               backgroundColor: "#6A0DAD", // Pi purple
               padding: { x: 20, y: 10 },
             })
@@ -125,6 +125,25 @@
               "Thank you! Donation of 1 Pi would support more game features. (Not implemented yet)"
             );
           });
+
+          const leaderboardButton = this.add
+            .text(
+              this.scale.width / 2,
+              this.scale.height / 1.75,
+              "Leaderboard",
+              {
+                fontSize: "32px",
+                fill: "#ffffff",
+                backgroundColor: "#6A0DAD", // Pi purple
+                padding: { x: 20, y: 10 },
+              }
+            )
+            .setOrigin(0.5)
+            .setInteractive();
+
+          leaderboardButton.on("pointerdown", () => {
+            this.scene.start("LeaderboardScene");
+          });
         }
 
         spawnFlyingRocket() {
@@ -149,6 +168,84 @@
           });
         }
       }
+
+      class LeaderboardScene extends Phaser.Scene {
+        constructor() {
+          super({ key: "LeaderboardScene" });
+        }
+
+        preload() {
+          // Als je een achtergrond hebt
+          this.load.image("space", "assets/back.png");
+        }
+
+        async create() {
+          // Achtergrond
+          this.add
+            .image(0, 0, "space")
+            .setOrigin(0)
+            .setDisplaySize(this.scale.width, this.scale.height);
+
+          this.add
+            .text(this.scale.width / 2, 50, "🏆 Leaderboard", {
+              fontSize: "42px",
+              fill: "#ffffff",
+              backgroundColor: "#6A0DAD", // Pi purple
+              padding: { x: 20, y: 10 },
+            })
+            .setOrigin(0.5);
+
+          // Data ophalen
+          const leaderboard = await this.fetchLeaderboard();
+
+          // Scores tonen
+          if (leaderboard && leaderboard.length > 0) {
+            leaderboard.forEach((entry, index) => {
+              this.add
+                .text(
+                  this.scale.width / 2,
+                  120 + index * 40,
+                  `${index + 1}. ${entry.username} - ${entry.score}`,
+                  { fontSize: "28px", fill: "#fff" }
+                )
+                .setOrigin(0.5);
+            });
+          } else {
+            this.add
+              .text(this.scale.width / 2, 200, "Nog geen scores!", {
+                fontSize: "28px",
+                fill: "#fff",
+              })
+              .setOrigin(0.5);
+          }
+
+          // Terugknop naar Menu
+          const backButton = this.add
+            .text(this.scale.width / 2, this.scale.height - 80, "⬅ Terug", {
+              fontSize: "32px",
+              fill: "#ffffff",
+              backgroundColor: "#6A0DAD", // Pi purple
+              padding: { x: 20, y: 10 },
+            })
+            .setOrigin(0.5)
+            .setInteractive();
+
+          backButton.on("pointerdown", () => {
+            this.scene.start("MenuScene");
+          });
+        }
+
+        async fetchLeaderboard() {
+          try {
+            const res = await fetch("/leaderboard");
+            return await res.json();
+          } catch (err) {
+            console.error("Failed to fetch leaderboard", err);
+            return [];
+          }
+        }
+      }
+
       class GameScene extends BaseScene {
         constructor() {
           super({ key: "GameScene" });
@@ -568,7 +665,7 @@
           width: 640,
           height: 960,
         },
-        scene: [MenuScene, GameScene],
+        scene: [MenuScene, LeaderboardScene, GameScene],
       };
 
       new Phaser.Game(config);
