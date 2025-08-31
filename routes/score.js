@@ -13,8 +13,7 @@ router.get('/leaderboard', async (req, res) => {
     const { data, error } = await supabase
         .from('scores')
         .select('*')
-        .order('score', { ascending: false })
-        .limit(10);
+        .order('score', { ascending: false });
     if (error) return res.status(500).json({ error: error.message });
     res.json(data);
 });
