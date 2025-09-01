@@ -302,9 +302,18 @@
               y += 40;
             });
 
-            this.maxScroll = Math.max(0, y - (this.scale.height - 400));
+            this.maxScroll = Math.max(0, y - (this.scale.height - 320));
           } catch (err) {
             console.error("Kon scores niet laden:", err);
+
+            this.add
+              .text(
+                this.scale.width / 2,
+                200,
+                "Fout bij laden van leaderboard",
+                { fontSize: "24px", fill: "#f00" }
+              )
+              .setOrigin(0.5);
           }
         }
 
