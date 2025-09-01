@@ -189,34 +189,32 @@
           this.add
             .text(this.scale.width / 2, 50, "🏆 Leaderboard", {
               fontSize: "42px",
-              fill: "#ffff00",
+              fill: "#fff",
             })
             .setOrigin(0.5);
 
-          // Data ophalen
-          const leaderboard = await this.fetchLeaderboard();
+          // container voor scores
+          this.scrollContainer = this.add.container(50, 180);
 
-          // Container met alle scores
-          this.content = this.add.container(0, 120);
-
-          leaderboard.forEach((entry, index) => {
-            const scoreText = this.add
-              .text(
-                this.scale.width / 2,
-                index * 40,
-                `${index + 1}. ${entry.player} - ${entry.score}`,
-                { fontSize: "28px", fill: "#fff" }
-              )
-              .setOrigin(0.5, 0);
-            this.content.add(scoreText);
-          });
-
-          // Mask zodat alleen een deel zichtbaar is (scroll-venster van 400px hoog)
-          const maskShape = this.add.graphics();
+          // scrollmask instellen
+          const maskShape = this.make.graphics();
           maskShape.fillStyle(0xffffff);
-          maskShape.fillRect(0, 120, this.scale.width, this.scale.height / 1.4);
-          maskShape.setVisible(false); // niet meer zichtbaar!
-          this.content.setMask(maskShape.createGeometryMask());
+          maskShape.fillRect(
+            50,
+            180,
+            this.scale.width - 100,
+            this.scale.height - 320
+          );
+          const mask = maskShape.createGeometryMask();
+          this.scrollContainer.setMask(mask);
+
+          // scroll variabelen
+          this.scrollY = 0;
+          this.input.on("wheel", (pointer, gameObjects, deltaX, deltaY) => {
+            this.scrollY -= deltaY * 0.5;
+            this.scrollY = Phaser.Math.Clamp(this.scrollY, -this.maxScroll, 0);
+            this.scrollContainer.y = 180 + this.scrollY;
+          });
 
           // Scrollen met muiswiel
           this.input.on("wheel", (pointer, gameObjects, dx, dy) => {
@@ -250,6 +248,66 @@
           backButton.on("pointerdown", () => {
             this.scene.start("MenuScene");
           });
+
+          // laad scores
+          this.loadScores();
+        }
+
+        async loadScores() {
+          try {
+            const response = await fetch("/api/score/leaderboard");
+            const scores = await response.json();
+
+            const currentUser = "A"; // <-- straks uit Pi login
+            const playerScore = scores.find((s) => s.player === currentUser);
+
+            this.content = this.add.container(0, 120);
+
+            // Toon speler score altijd bovenaan
+            if (playerScore) {
+              const playerItem = this.add
+                .text(
+                  this.scale.width / 2,
+                  120,
+                  `Your personal highscore: ${playerScore.score}`,
+                  {
+                    fontSize: "24px",
+                    fill: "#ffd700",
+                    backgroundColor: "#333",
+                    padding: { x: 12, y: 8 },
+                  }
+                )
+                .setOrigin(0.5);
+              playerItem.setStroke("#000", 4);
+            }
+
+            // Lijst renderen
+            let y = 0;
+            scores.forEach((score, index) => {
+              const item = this.add
+                .text(
+                  this.scale.width / 4,
+                  y,
+                  `${index + 1}. ${score.player} - ${score.score}`,
+                  {
+                    fontSize: "24px",
+                    fill: score.player === currentUser ? "#ffd700" : "#fff",
+                  }
+                )
+                .setOrigin(0, 0);
+
+              if (score.player === currentUser) {
+                item.setFontStyle("bold");
+              }
+
+              this.scrollContainer.add(item);
+              y += 40;
+            });
+
+            this.maxScroll = Math.max(0, y - (this.scale.height - 400));
+          } catch (err) {
+            console.error("Kon scores niet laden:", err);
+          }
         }
 
         async fetchLeaderboard() {
