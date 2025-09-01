@@ -224,7 +224,7 @@
           // Scrollen met touch drag (voor mobiel)
           this.input.on("pointerdown", (pointer) => {
             this.startY = pointer.y;
-            this.startContentY = this.content.y;
+            this.startContentY = this.scrollY;
           });
 
           this.input.on("pointermove", (pointer) => {
@@ -260,8 +260,6 @@
 
             const currentUser = "A"; // <-- straks uit Pi login
             const playerScore = scores.find((s) => s.player === currentUser);
-
-            this.content = this.add.container(0, 120);
 
             // Toon speler score altijd bovenaan
             if (playerScore) {
@@ -320,15 +318,9 @@
           }
         }
 
-        scrollContent(dy, baseY = this.content.y) {
-          const contentHeight = this.content.list.length * 40;
-          const viewHeight = 400;
-
-          this.content.y = Phaser.Math.Clamp(
-            baseY - dy,
-            -(contentHeight - viewHeight),
-            120
-          );
+        scrollContent(dy, baseY = this.scrollY) {
+          this.scrollY = Phaser.Math.Clamp(baseY - dy, -this.maxScroll, 0);
+          this.scrollContainer.y = 180 + this.scrollY;
         }
       }
 
@@ -619,15 +611,6 @@
           bottomPipe.scored = false;
           bottomPipe.body.ignoreWorldBounds = true;
           this.pipes.push(bottomPipe);
-
-          console.log(
-            "Top Pipe Y:",
-            topPipeY,
-            "Bottom Pipe Y:",
-            bottomPipeY,
-            "Gap:",
-            bottomPipeY - topPipeY
-          );
         }
 
         gameOver() {
