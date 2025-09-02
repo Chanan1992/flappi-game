@@ -9,6 +9,8 @@
     <title>FlapPi</title>
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+    <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+    <script src="piAuth.js"></script>
     <style>
       body {
         margin: 0;
@@ -54,7 +56,9 @@
           this.load.image("space", "assets/back.png");
         }
 
-        create() {
+        async create() {
+          // Login gebruiker (alleen de eerste keer wordt echt gevraagd)
+
           this.background;
 
           // Achtergrond
@@ -66,6 +70,14 @@
               this.scale.gameSize.height
             )
             .setScrollFactor(0);
+
+          await initPiAuth();
+          const user = getPiUser();
+
+          this.add.text(100, 100, `Welkom ${user?.username || "Gast"}`, {
+            fontSize: "32px",
+            fill: "#fff",
+          });
 
           this.add
             .image(this.scale.width / 2, this.scale.height / 4, "rocket")
