@@ -653,10 +653,10 @@
             .setOrigin(0.5);
 
           if (this.score > this.highScoreData.score) {
-            this.highScoreData = this.saveHighScore(this.score);
-            this.highScoreText.setText(
-              "High score: " + this.highScoreData.score
-            );
+            // this.highScoreData = this.saveHighScore(this.score);
+            // this.highScoreText.setText(
+            //   "High score: " + this.highScoreData.score
+            // );
             this.postScore(this.score);
           }
 
@@ -720,6 +720,11 @@
         }
 
         async postScore(score) {
+          if (!window.PiUser) {
+            console.warn("Niet ingelogd, score niet opgeslagen.");
+            return;
+          }
+
           try {
             await fetch("/api/score", {
               method: "POST",
@@ -727,7 +732,7 @@
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
-                player: "anonymous", // hier kun je later Pi-username gebruiken
+                player: PiUser.username, // hier kun je later Pi-username gebruiken
                 score: score,
               }),
             });
