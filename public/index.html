@@ -367,7 +367,7 @@
           this.load.audio("explosionSound", "assets/explosion.mp3");
         }
 
-        create(data) {
+        async create(data) {
           this.pipes = []; // Array to manage pipes
 
           this.score = data?.continueScore || 0; // if retry, start with old score
@@ -456,7 +456,7 @@
             .text(
               16,
               16,
-              "High Score: " + getPlayerHighscore(PiUser.username),
+              "High Score: " + (await this.getPlayerHighscore(PiUser.username)),
               {
                 fontSize: "32px",
                 fill: "#FFFFFF",
@@ -632,7 +632,7 @@
           this.pipes.push(bottomPipe);
         }
 
-        gameOver() {
+        async gameOver() {
           // if (!isGameOver) {
           this.isGameOver = true;
           this.explosionSound.play();
@@ -650,7 +650,9 @@
             )
             .setOrigin(0.5);
 
-          if (this.score > getPlayerHighscore(PiUser.username)) {
+          const score = await this.getPlayerHighscore(PiUser.username);
+
+          if (this.score > score) {
             this.postScore(this.score);
           }
 

@@ -14,6 +14,14 @@ async function initPiAuth() {
     // Ask permissions: username, payments (later for donate/extra life)
     const scopes = ["username", "payments"];
 
+    // PiUser = {
+    //     username: "test_user",
+    //     uid: "12345",
+    //     accessToken: "mock-token"
+    //   };
+
+    //   resolve(PiUser)
+
     window.Pi.authenticate(scopes, onIncompletePaymentFound)
       .then(({ user, accessToken }) => {
         PiUser = { ...user, accessToken };
