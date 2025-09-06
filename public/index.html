@@ -377,8 +377,8 @@
           this.isGameOver = false;
 
           this.background;
-          this.highScoreData = this.loadHighScore();
-          this.highScoreText;
+          // this.highScoreData = this.loadHighScore();
+          // this.highScoreText;
           this.retryButton;
           this.spawnTimer = 0;
           this.spawnInterval = 2000;
@@ -453,10 +453,15 @@
             })
             .setDepth(10);
           this.highScoreText = this.add
-            .text(16, 16, "High Score: " + this.highScoreData.score, {
-              fontSize: "32px",
-              fill: "#FFFFFF",
-            })
+            .text(
+              16,
+              16,
+              "High Score: " + getPlayerHighscore(PiUser.username),
+              {
+                fontSize: "32px",
+                fill: "#FFFFFF",
+              }
+            )
             .setDepth(10);
 
           // Input handling
@@ -483,23 +488,16 @@
           this.matter.world.engine.timing.timeScale = 1; // Default time scale
         }
 
-        loadHighScore() {
-          const savedData = localStorage.getItem("highScoreData");
-          if (savedData) {
-            const data = JSON.parse(savedData);
-            const check = this.md5(data.score + SECRET_KEY);
-            if (check === data.checksum) {
-              return data;
-            }
+        async getPlayerHighscore(username) {
+          try {
+            const res = await fetch(`/api/score/${username}`);
+            if (!res.ok) throw new Error("Failed to fetch highscore");
+            const data = await res.json();
+            return data?.score || 0;
+          } catch (err) {
+            console.error("❌ Kon highscore niet ophalen:", err);
+            return 0;
           }
-          return { score: 0, checksum: this.md5("0" + SECRET_KEY) };
-        }
-
-        saveHighScore(score) {
-          const checksum = this.md5(score + SECRET_KEY);
-          const data = { score, checksum };
-          localStorage.setItem("highScoreData", JSON.stringify(data));
-          return data;
         }
 
         // Simpele MD5 implementatie (voor demo, gebruik een library zoals md5.js in productie)
@@ -652,11 +650,7 @@
             )
             .setOrigin(0.5);
 
-          if (this.score > this.highScoreData.score) {
-            // this.highScoreData = this.saveHighScore(this.score);
-            // this.highScoreText.setText(
-            //   "High score: " + this.highScoreData.score
-            // );
+          if (this.score > getPlayerHighscore(PiUser.username)) {
             this.postScore(this.score);
           }
 

@@ -18,4 +18,23 @@ router.get('/leaderboard', async (req, res) => {
     res.json(data);
 });
 
+// Highscore van 1 speler ophalen
+router.get("/:player", async (req, res) => {
+  const { player } = req.params;
+
+  try {
+    const { data, error } = await supabase
+      .from("scores")
+      .select("score")
+      .eq("player", player)
+      .single();
+
+    if (error && error.code !== "PGRST116") throw error; // Geen resultaat = ok
+    res.json(data || { score: 0 });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Kon highscore niet ophalen" });
+  }
+});
+
 module.exports = router;
