@@ -653,7 +653,7 @@
           const score = await this.getPlayerHighscore(PiUser.username);
 
           if (this.score > score) {
-            this.postScore(this.score);
+            await this.postScore(this.score);
           }
 
           if (!this.retryUsed) {
