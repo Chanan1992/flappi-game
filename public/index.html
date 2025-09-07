@@ -205,6 +205,15 @@
             })
             .setOrigin(0.5);
 
+          this.add.rectangle(
+            50 + (this.scale.width - 100) / 2,
+            180 + (this.scale.height - 320) / 2,
+            this.scale.width - 100,
+            this.scale.height - 320,
+            0xff0000,
+            0.2
+          );
+
           // container voor scores
           this.scrollContainer = this.add.container(50, 180);
 
@@ -212,13 +221,13 @@
           const maskShape = this.make.graphics();
           maskShape.fillStyle(0xffffff);
           maskShape.fillRect(
-            50,
-            180,
+            0,
+            0,
             this.scale.width - 100,
             this.scale.height - 320
           );
           const mask = maskShape.createGeometryMask();
-          // this.scrollContainer.setMask(mask);
+          this.scrollContainer.setMask(mask);
 
           // scroll variabelen
           this.scrollY = 0;
