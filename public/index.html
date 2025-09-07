@@ -291,6 +291,21 @@
               playerItem.setStroke("#000", 4);
             }
 
+            const playerItem = this.add
+              .text(
+                this.scale.width / 2,
+                160,
+                `Amount of score: ${scores.length}`,
+                {
+                  fontSize: "24px",
+                  fill: "#ffd700",
+                  backgroundColor: "#333",
+                  padding: { x: 12, y: 8 },
+                }
+              )
+              .setOrigin(0.5);
+            playerItem.setStroke("#000", 4);
+
             // Lijst renderen
             let y = 0;
             scores.forEach((score, index) => {
