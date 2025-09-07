@@ -270,8 +270,30 @@
             this.scene.start("MenuScene");
           });
 
+          this.scrollContainer = null;
+          this.isDragging = false;
+          this.startY = 0;
+          this.scrollStartY = 0;
+          this.scrollSpeed = 0;
+          this.maxScroll = 0;
+
           // laad scores
           this.loadScores();
+        }
+
+        update() {
+          if (!this.isDragging) {
+            if (Math.abs(this.scrollSpeed) > 0.5) {
+              this.scrollContainer.y = Phaser.Math.Clamp(
+                this.scrollContainer.y + this.scrollSpeed,
+                150 - this.maxScroll,
+                150
+              );
+              this.scrollSpeed *= 0.95; // friction
+            } else {
+              this.scrollSpeed = 0;
+            }
+          }
         }
 
         async loadScores() {
@@ -340,22 +362,35 @@
             });
 
             // Max scroll waarde
-            this.maxScroll = Math.max(
-              0,
-              y - (this.scale.height - leaderboardY - 50)
-            );
+            this.maxScroll = Math.max(0, y - (this.scale.height - 150 - 50));
 
-            // Scroll input
+            this.input.on("pointerdown", (pointer) => {
+              this.isDragging = true;
+              this.startY = pointer.y;
+              this.scrollStartY = this.scrollContainer.y;
+              this.scrollSpeed = 0;
+            });
+
+            this.input.on("pointerup", () => {
+              this.isDragging = false;
+            });
+
             this.input.on("pointermove", (pointer) => {
-              if (pointer.isDown) {
-                this.scrollContainer.y += pointer.velocity.y * 0.01; // snelheid aanpassen
+              if (this.isDragging) {
+                const deltaY = pointer.y - this.startY;
                 this.scrollContainer.y = Phaser.Math.Clamp(
-                  this.scrollContainer.y,
-                  leaderboardY - this.maxScroll,
-                  leaderboardY
+                  this.scrollStartY + deltaY,
+                  150 - this.maxScroll,
+                  150
                 );
+
+                // snelheid voor momentum
+                this.scrollSpeed = pointer.velocity
+                  ? pointer.velocity.y * 0.05
+                  : deltaY;
               }
             });
+
             // scores.forEach((score, index) => {
             //   this.add.text(
             //     50,
