@@ -215,45 +215,45 @@
           );
 
           // container voor scores
-          this.scrollContainer = this.add.container(50, 180);
+          // this.scrollContainer = this.add.container(50, 180);
 
           // scrollmask instellen
-          const maskShape = this.make.graphics();
-          maskShape.fillStyle(0xffffff);
-          maskShape.fillRect(
-            0,
-            0,
-            this.scale.width - 100,
-            this.scale.height - 320
-          );
-          const mask = maskShape.createGeometryMask();
-          this.scrollContainer.setMask(mask);
+          // const maskShape = this.make.graphics();
+          // maskShape.fillStyle(0xffffff);
+          // maskShape.fillRect(
+          //   0,
+          //   0,
+          //   this.scale.width - 100,
+          //   this.scale.height - 320
+          // );
+          // const mask = maskShape.createGeometryMask();
+          // this.scrollContainer.setMask(mask);
 
           // scroll variabelen
-          this.scrollY = 0;
-          this.input.on("wheel", (pointer, gameObjects, deltaX, deltaY) => {
-            this.scrollY -= deltaY * 0.5;
-            this.scrollY = Phaser.Math.Clamp(this.scrollY, -this.maxScroll, 0);
-            this.scrollContainer.y = 180 + this.scrollY;
-          });
+          // this.scrollY = 0;
+          // this.input.on("wheel", (pointer, gameObjects, deltaX, deltaY) => {
+          //   this.scrollY -= deltaY * 0.5;
+          //   this.scrollY = Phaser.Math.Clamp(this.scrollY, -this.maxScroll, 0);
+          //   this.scrollContainer.y = 180 + this.scrollY;
+          // });
 
           // Scrollen met muiswiel
-          this.input.on("wheel", (pointer, gameObjects, dx, dy) => {
-            this.scrollContent(dy);
-          });
+          // this.input.on("wheel", (pointer, gameObjects, dx, dy) => {
+          //   this.scrollContent(dy);
+          // });
 
           // Scrollen met touch drag (voor mobiel)
-          this.input.on("pointerdown", (pointer) => {
-            this.startY = pointer.y;
-            this.startContentY = this.scrollY;
-          });
+          // this.input.on("pointerdown", (pointer) => {
+          //   this.startY = pointer.y;
+          //   this.startContentY = this.scrollY;
+          // });
 
-          this.input.on("pointermove", (pointer) => {
-            if (pointer.isDown) {
-              const deltaY = pointer.y - this.startY;
-              this.scrollContent(-deltaY, this.startContentY);
-            }
-          });
+          // this.input.on("pointermove", (pointer) => {
+          //   if (pointer.isDown) {
+          //     const deltaY = pointer.y - this.startY;
+          //     this.scrollContent(-deltaY, this.startContentY);
+          //   }
+          // });
 
           // Terugknop naar Menu
           const backButton = this.add
@@ -315,19 +315,58 @@
               .setOrigin(0.5);
             playerItem.setStroke("#000", 4);
 
+            // Maak container voor scrollbare leaderboard
+            const leaderboardX = this.scale.width / 2;
+            const leaderboardY = 150;
+            this.scrollContainer = this.add.container(
+              leaderboardX,
+              leaderboardY
+            );
+
             // Lijst renderen
             let y = 0;
+            const itemSpacing = 40;
             scores.forEach((score, index) => {
-              this.add.text(
-                50,
-                300 + index * 40,
-                `${index + 1}. ${score.player} - ${score.score}`,
-                {
+              const textItem = this.add
+                .text(0, y, `${index + 1}. ${score.player} - ${score.score}`, {
                   fontSize: "24px",
-                  fill: "#fff",
-                }
-              );
+                  fill: score.player === currentUser ? "#ffd700" : "#fff",
+                  fontStyle: score.player === currentUser ? "bold" : "normal",
+                })
+                .setOrigin(0.5, 0); // center horizontaal
+
+              this.scrollContainer.add(textItem);
+              y += itemSpacing;
             });
+
+            // Max scroll waarde
+            this.maxScroll = Math.max(
+              0,
+              y - (this.scale.height - leaderboardY - 50)
+            );
+
+            // Scroll input
+            this.input.on("pointermove", (pointer) => {
+              if (pointer.isDown) {
+                this.scrollContainer.y += pointer.velocity.y * 0.01; // snelheid aanpassen
+                this.scrollContainer.y = Phaser.Math.Clamp(
+                  this.scrollContainer.y,
+                  leaderboardY - this.maxScroll,
+                  leaderboardY
+                );
+              }
+            });
+            // scores.forEach((score, index) => {
+            //   this.add.text(
+            //     50,
+            //     300 + index * 40,
+            //     `${index + 1}. ${score.player} - ${score.score}`,
+            //     {
+            //       fontSize: "24px",
+            //       fill: "#fff",
+            //     }
+            //   );
+            // });
             // scores.forEach((score, index) => {
             //   const item = this.add
             //     .text(0, y, `${index + 1}. ${score.player} - ${score.score}`, {
