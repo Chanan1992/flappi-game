@@ -457,25 +457,6 @@
             .setDisplaySize(this.scale.width, this.scale.height)
             .setScrollFactor(0);
 
-          // Score tekst
-          this.scoreText = this.add
-            .text(16, 48, "Score: " + this.score, {
-              fontSize: "32px",
-              fill: "#FFFFFF",
-            })
-            .setDepth(10);
-          this.highScoreText = this.add
-            .text(
-              16,
-              16,
-              "High Score: " + (await this.getPlayerHighscore(PiUser.username)),
-              {
-                fontSize: "32px",
-                fill: "#FFFFFF",
-              }
-            )
-            .setDepth(10);
-
           const { width, height } = this.textures
             .get("rocket")
             .getSourceImage();
@@ -516,6 +497,25 @@
             on: false,
           });
           this.emitter.startFollow(this.rocket, -25, 0); // Rook komt uit de achterkant van de raket
+
+          // Score tekst
+          this.scoreText = this.add
+            .text(16, 48, "Score: " + this.score, {
+              fontSize: "32px",
+              fill: "#FFFFFF",
+            })
+            .setDepth(10);
+          this.highScoreText = this.add
+            .text(
+              16,
+              16,
+              "High Score: " + (await this.getPlayerHighscore(PiUser.username)),
+              {
+                fontSize: "32px",
+                fill: "#FFFFFF",
+              }
+            )
+            .setDepth(10);
 
           // Input handling
           this.input.on("pointerdown", this.flap, this);
