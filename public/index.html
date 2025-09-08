@@ -340,33 +340,6 @@
               }
             });
 
-            // scores.forEach((score, index) => {
-            //   this.add.text(
-            //     50,
-            //     300 + index * 40,
-            //     `${index + 1}. ${score.player} - ${score.score}`,
-            //     {
-            //       fontSize: "24px",
-            //       fill: "#fff",
-            //     }
-            //   );
-            // });
-            // scores.forEach((score, index) => {
-            //   const item = this.add
-            //     .text(0, y, `${index + 1}. ${score.player} - ${score.score}`, {
-            //       fontSize: "24px",
-            //       fill: score.player === currentUser ? "#ffd700" : "#fff",
-            //     })
-            //     .setOrigin(0, 0);
-
-            //   if (score.player === currentUser) {
-            //     item.setFontStyle("bold");
-            //   }
-
-            //   this.scrollContainer.add(item);
-            //   y += 40;
-            // });
-
             this.maxScroll = Math.max(0, y - (this.scale.height - 320));
           } catch (err) {
             console.error("Kon scores niet laden:", err);
@@ -421,6 +394,8 @@
         }
 
         async create(data) {
+          this.isReady = false;
+
           this.pipes = []; // Array to manage pipes
 
           this.score = data?.continueScore || 0; // if retry, start with old score
@@ -461,6 +436,25 @@
             .get("rocket")
             .getSourceImage();
 
+          // Score tekst
+          this.scoreText = this.add
+            .text(16, 48, "Score: " + this.score, {
+              fontSize: "32px",
+              fill: "#FFFFFF",
+            })
+            .setDepth(10);
+
+          const highscoreFromDb = await this.getPlayerHighscore(
+            PiUser.username
+          );
+
+          this.highScoreText = this.add
+            .text(16, 16, "High Score: " + highscoreFromDb, {
+              fontSize: "32px",
+              fill: "#FFFFFF",
+            })
+            .setDepth(10);
+
           this.rocket = this.matter.add
             .sprite(64, 64, "rocket", null, {
               shape: {
@@ -498,25 +492,6 @@
           });
           this.emitter.startFollow(this.rocket, -25, 0); // Rook komt uit de achterkant van de raket
 
-          // Score tekst
-          this.scoreText = this.add
-            .text(16, 48, "Score: " + this.score, {
-              fontSize: "32px",
-              fill: "#FFFFFF",
-            })
-            .setDepth(10);
-          this.highScoreText = this.add
-            .text(
-              16,
-              16,
-              "High Score: " + (await this.getPlayerHighscore(PiUser.username)),
-              {
-                fontSize: "32px",
-                fill: "#FFFFFF",
-              }
-            )
-            .setDepth(10);
-
           // Input handling
           this.input.on("pointerdown", this.flap, this);
           this.input.keyboard.on("keydown-SPACE", this.flap, this);
@@ -539,6 +514,8 @@
 
           // Set a fixed time step for Matter.js to ensure consistency
           this.matter.world.engine.timing.timeScale = 1; // Default time scale
+
+          this.isReady = true;
         }
 
         async getPlayerHighscore(username) {
@@ -554,6 +531,10 @@
         }
 
         update(time, delta) {
+          if (!this.isReady) {
+            return;
+          }
+
           if (this.isGameOver) return; // Normalize delta to a standard value (e.g., 16.67ms for 60 FPS)
 
           const fixedDelta = Math.min(delta, 16.67); // Cap delta to prevent large steps
@@ -613,7 +594,7 @@
         }
 
         flap() {
-          if (!this.isGameOver) {
+          if (!this.isGameOver && this.isReady) {
             this.rocket.setVelocityY(-5.5);
             this.rocket.setRotation(Phaser.Math.DegToRad(-45)); // Roteer omhoog bij flap
             // Activeer rookeffect en pas rotatie aan
@@ -802,9 +783,6 @@
       };
 
       new Phaser.Game(config);
-
-      // Simpele geheime sleutel voor checksum (moet consistent blijven)
-      SECRET_KEY = "flappyPi2025";
 
       MOVE_SPEED = 200; // Pixels per second
     </script>
