@@ -9,29 +9,29 @@ async function initPiAuth() {
     }
 
     // Initialize Pi SDK
-    // window.Pi.init({ version: "2.0", sandbox: true });
+    window.Pi.init({ version: "2.0", sandbox: true });
 
     // Ask permissions: username, payments (later for donate/extra life)
     const scopes = ["username", "payments"];
 
-    PiUser = {
-        username: "test_usernieuw",
-        uid: "12345",
-        accessToken: "mock-token"
-      };
+    // PiUser = {
+        // username: "test_usernieuw",
+        // uid: "12345",
+        // accessToken: "mock-token"
+      // };
 
-      resolve(PiUser)
+      // resolve(PiUser)
 
-    // window.Pi.authenticate(scopes, onIncompletePaymentFound)
-    //   .then(({ user, accessToken }) => {
-    //     PiUser = { ...user, accessToken };
-    //     console.log("✅ Pi User logged in:", PiUser);
-    //     resolve(PiUser);
-    //   })
-    //   .catch((err) => {
-    //     console.error("❌ Pi Authentication failed:", err);
-    //     reject(err);
-    //   });
+    window.Pi.authenticate(scopes, onIncompletePaymentFound)
+      .then(({ user, accessToken }) => {
+        PiUser = { ...user, accessToken };
+        console.log("✅ Pi User logged in:", PiUser);
+        resolve(PiUser);
+      })
+      .catch((err) => {
+        console.error("❌ Pi Authentication failed:", err);
+        reject(err);
+      });
   });
 }
 
