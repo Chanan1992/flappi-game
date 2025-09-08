@@ -72,12 +72,6 @@
             .setScrollFactor(0);
 
           await initPiAuth();
-          const user = getPiUser();
-
-          this.add.text(100, 100, `Welkom ${user?.username || "Gast"}`, {
-            fontSize: "32px",
-            fill: "#fff",
-          });
 
           this.add
             .image(this.scale.width / 2, this.scale.height / 4, "rocket")
@@ -205,56 +199,6 @@
             })
             .setOrigin(0.5);
 
-          this.add.rectangle(
-            50 + (this.scale.width - 100) / 2,
-            180 + (this.scale.height - 320) / 2,
-            this.scale.width - 100,
-            this.scale.height - 320,
-            0xff0000,
-            0.2
-          );
-
-          // container voor scores
-          // this.scrollContainer = this.add.container(50, 180);
-
-          // scrollmask instellen
-          // const maskShape = this.make.graphics();
-          // maskShape.fillStyle(0xffffff);
-          // maskShape.fillRect(
-          //   0,
-          //   0,
-          //   this.scale.width - 100,
-          //   this.scale.height - 320
-          // );
-          // const mask = maskShape.createGeometryMask();
-          // this.scrollContainer.setMask(mask);
-
-          // scroll variabelen
-          // this.scrollY = 0;
-          // this.input.on("wheel", (pointer, gameObjects, deltaX, deltaY) => {
-          //   this.scrollY -= deltaY * 0.5;
-          //   this.scrollY = Phaser.Math.Clamp(this.scrollY, -this.maxScroll, 0);
-          //   this.scrollContainer.y = 180 + this.scrollY;
-          // });
-
-          // Scrollen met muiswiel
-          // this.input.on("wheel", (pointer, gameObjects, dx, dy) => {
-          //   this.scrollContent(dy);
-          // });
-
-          // Scrollen met touch drag (voor mobiel)
-          // this.input.on("pointerdown", (pointer) => {
-          //   this.startY = pointer.y;
-          //   this.startContentY = this.scrollY;
-          // });
-
-          // this.input.on("pointermove", (pointer) => {
-          //   if (pointer.isDown) {
-          //     const deltaY = pointer.y - this.startY;
-          //     this.scrollContent(-deltaY, this.startContentY);
-          //   }
-          // });
-
           // Terugknop naar Menu
           const backButton = this.add
             .text(this.scale.width / 2, this.scale.height - 80, "⬅ Terug", {
@@ -286,7 +230,7 @@
             const response = await fetch("/api/score/leaderboard");
             const scores = await response.json();
 
-            const currentUser = "A"; // <-- straks uit Pi login
+            const currentUser = getPiUser().username; // <-- straks uit Pi login
             const playerScore = scores.find((s) => s.player === currentUser);
 
             // Toon speler score altijd bovenaan
@@ -306,21 +250,6 @@
                 .setOrigin(0.5);
               playerItem.setStroke("#000", 4);
             }
-
-            const playerItem = this.add
-              .text(
-                this.scale.width / 2,
-                160,
-                `Amount of score: ${scores.length}`,
-                {
-                  fontSize: "24px",
-                  fill: "#ffd700",
-                  backgroundColor: "#333",
-                  padding: { x: 12, y: 8 },
-                }
-              )
-              .setOrigin(0.5);
-            playerItem.setStroke("#000", 4);
 
             const leaderboardY = 200; // top van leaderboard area
             const leaderboardHeight = 600; // hoogte van leaderboard area
@@ -528,6 +457,25 @@
             .setDisplaySize(this.scale.width, this.scale.height)
             .setScrollFactor(0);
 
+          // Score tekst
+          this.scoreText = this.add
+            .text(16, 48, "Score: " + this.score, {
+              fontSize: "32px",
+              fill: "#FFFFFF",
+            })
+            .setDepth(10);
+          this.highScoreText = this.add
+            .text(
+              16,
+              16,
+              "High Score: " + (await this.getPlayerHighscore(PiUser.username)),
+              {
+                fontSize: "32px",
+                fill: "#FFFFFF",
+              }
+            )
+            .setDepth(10);
+
           const { width, height } = this.textures
             .get("rocket")
             .getSourceImage();
@@ -569,25 +517,6 @@
           });
           this.emitter.startFollow(this.rocket, -25, 0); // Rook komt uit de achterkant van de raket
 
-          // Score tekst
-          this.scoreText = this.add
-            .text(16, 48, "Score: " + this.score, {
-              fontSize: "32px",
-              fill: "#FFFFFF",
-            })
-            .setDepth(10);
-          this.highScoreText = this.add
-            .text(
-              16,
-              16,
-              "High Score: " + (await this.getPlayerHighscore(PiUser.username)),
-              {
-                fontSize: "32px",
-                fill: "#FFFFFF",
-              }
-            )
-            .setDepth(10);
-
           // Input handling
           this.input.on("pointerdown", this.flap, this);
           this.input.keyboard.on("keydown-SPACE", this.flap, this);
@@ -622,17 +551,6 @@
             console.error("❌ Kon highscore niet ophalen:", err);
             return 0;
           }
-        }
-
-        // Simpele MD5 implementatie (voor demo, gebruik een library zoals md5.js in productie)
-        md5(str) {
-          // Dit is een placeholder, vervang door een echte MD5 library in productie
-          let hash = 0;
-          for (let i = 0; i < str.length; i++) {
-            hash = (hash << 5) - hash + str.charCodeAt(i);
-            hash |= 0; // Convert to 32-bit integer
-          }
-          return hash.toString(16);
         }
 
         update(time, delta) {
