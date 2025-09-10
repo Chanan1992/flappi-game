@@ -739,11 +739,6 @@
         }
 
         async postScore(score) {
-          if (!window.PiUser) {
-            console.warn("Niet ingelogd, score niet opgeslagen.");
-            return;
-          }
-
           try {
             await fetch("/api/score", {
               method: "POST",
