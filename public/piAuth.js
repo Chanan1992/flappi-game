@@ -15,12 +15,12 @@ async function initPiAuth() {
     const scopes = ["username", "payments"];
 
     // PiUser = {
-        // username: "test_usernieuw",
-        // uid: "12345",
-        // accessToken: "mock-token"
-      // };
+    //     username: "test_usernieuw",
+    //     uid: "12345",
+    //     accessToken: "mock-token"
+    //   };
 
-      // resolve(PiUser)
+      resolve(PiUser)
 
     window.Pi.authenticate(scopes, onIncompletePaymentFound)
       .then(({ user, accessToken }) => {
@@ -46,6 +46,53 @@ function getPiUser() {
   return PiUser;
 }
 
+/**
+ * Start een donatie van 1 Pi
+ */
+async function donateOnePi() {
+  if (!PiUser) {
+    console.error("❌ No user logged in");
+    return;
+  }
+
+  try {
+    await window.Pi.createPayment(
+      {
+        amount: 1,
+        memo: "Donation for more game",
+        metadata: { reason: "donation" },
+      },
+      {
+        onReadyForServerApproval: (paymentId) => {
+          console.log("💰 Payment ready for server-approval:", paymentId);
+          fetch("/api/pi/payments/approve", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ paymentId }),
+          });
+        },
+        onReadyForServerCompletion: (paymentId, txid) => {
+          console.log("💰 Payment ready for server-completion:", paymentId, txid);
+          fetch("/api/pi/payments/complete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ paymentId, txid }),
+          });
+        },
+        onCancel: (paymentId) => {
+          console.warn("🚫 Payment cancelled:", paymentId);
+        },
+        onError: (error, payment) => {
+          console.error("❌ Payment error:", error, payment);
+        },
+      }
+    );
+  } catch (err) {
+    console.error("❌ Not able to start donation payment:", err);
+  }
+}
+
 // Exports
 window.initPiAuth = initPiAuth;
 window.getPiUser = getPiUser;
+window.donateOnePi = donateOnePi;

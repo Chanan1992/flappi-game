@@ -120,16 +120,7 @@
             .setInteractive();
 
           donateButton.on("pointerdown", () => {
-            // Placeholder for future Pi donation
-            // if (checkPiBalance(1)) {
-            //     deductPi(1);
-            //     alert('Thank you for your 1 Pi donation! More features coming soon!');
-            // } else {
-            //     alert('Not enough Pi to donate!');
-            // }
-            alert(
-              "Thank you! Donation of 1 Pi would support more game features. (Not implemented yet)"
-            );
+            donateOnePi();
           });
 
           const leaderboardButton = this.add
