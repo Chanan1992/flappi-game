@@ -11,6 +11,9 @@ app.use(express.static('public'));
 const scoreRoutes = require('./routes/score');
 app.use('/api/score', scoreRoutes);
 
+const paymentsRouter = require("./routes/payments");
+app.use("/api/pi/payments", paymentsRouter);
+
 // Privacy page route
 app.get("/privacy", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "privacy.html"));
