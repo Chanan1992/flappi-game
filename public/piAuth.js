@@ -9,7 +9,7 @@ async function initPiAuth() {
     }
 
     // Initialize Pi SDK
-    window.Pi.init({ version: "2.0"});
+    window.Pi.init({ version: "2.0", sandbox: true});
 
     // Ask permissions: username, payments (later for donate/extra life)
     const scopes = ["username", "payments"];
@@ -92,7 +92,12 @@ async function donateOnePi() {
   }
 }
 
+function shareDialog() {
+  window.Pi.openShareDialog("A title", "A message");
+}
+
 // Exports
 window.initPiAuth = initPiAuth;
 window.getPiUser = getPiUser;
 window.donateOnePi = donateOnePi;
+window.shareDialog = shareDialog;

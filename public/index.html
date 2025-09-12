@@ -123,6 +123,22 @@
             donateOnePi();
           });
 
+          // Share button
+          const shareButton = this.add
+            .text(125, 20, "Share this game!", {
+              fontSize: "18px",
+              fill: "#fff",
+              backgroundColor: "#6A0DAD", // Pi purple
+              padding: { x: 10, y: 5 },
+              align: "center",
+            })
+            .setOrigin(0.5, 0)
+            .setInteractive();
+
+          shareButton.on("pointerdown", () => {
+            shareDialog();
+          });
+
           const leaderboardButton = this.add
             .text(
               this.scale.width / 2,
