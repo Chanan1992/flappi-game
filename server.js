@@ -24,6 +24,11 @@ app.get("/terms", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "terms.html"));
 });
 
+// Terms page route
+app.get("/validation-key.txt", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "validation-key.txt"));
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`🚀 Server draait op poort ${PORT}`);
