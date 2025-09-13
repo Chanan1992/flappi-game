@@ -14,11 +14,11 @@ async function initPiAuth() {
     // Ask permissions: username, payments (later for donate/extra life)
     const scopes = ["username", "payments"];
 
-    PiUser = {
-        username: "test_usernieuw",
-        uid: "12345",
-        accessToken: "mock-token"
-      };
+    // PiUser = {
+    //     username: "test_usernieuw",
+    //     uid: "12345",
+    //     accessToken: "mock-token"
+    //   };
 
       resolve(PiUser)
 
