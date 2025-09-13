@@ -92,12 +92,60 @@ async function donateOnePi() {
   }
 }
 
-function shareDialog() {
-  window.Pi.openShareDialog("A title", "A message");
+async function buyRetry() {
+  if (!PiUser) {
+    console.error("❌ No user logged in");
+    return;
+  }
+
+  try {
+    await window.Pi.createPayment(
+      {
+        amount: 0.5, // bijvoorbeeld halve Pi voor retry
+        memo: "Extra retry",
+        metadata: { reason: "retry" },
+      },
+      {
+        onReadyForServerApproval: (paymentId) => {
+          console.log("🛒 Retry payment ready for approval:", paymentId);
+          fetch("/api/pi/payments/approve", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ paymentId }),
+          });
+        },
+        onReadyForServerCompletion: (paymentId, txid) => {
+          console.log("✅ Retry payment ready for completion:", paymentId, txid);
+          fetch("/api/pi/payments/complete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ paymentId, txid }),
+          }).then(() => {
+            // 🎮 Geef speler nu een herkansing
+            window.dispatchEvent(new CustomEvent("retry-purchased"));
+          });
+        },
+        onCancel: (paymentId) => {
+          console.warn("🚫 Retry payment cancelled:", paymentId);
+        },
+        onError: (error, payment) => {
+          console.error("❌ Retry payment error:", error, payment);
+        },
+      }
+    );
+  } catch (err) {
+    console.error("❌ Not able to start retry payment:", err);
+  }
 }
+
+
+// function shareDialog() {
+//   window.Pi.openShareDialog("A title", "A message");
+// }
 
 // Exports
 window.initPiAuth = initPiAuth;
 window.getPiUser = getPiUser;
 window.donateOnePi = donateOnePi;
-window.shareDialog = shareDialog;
+window.buyRetry = buyRetry;
+// window.shareDialog = shareDialog;
