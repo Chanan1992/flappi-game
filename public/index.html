@@ -529,33 +529,36 @@
             this.grantRetry();
           });
 
-          // --- Overlay tekst ---
-          this.startText = this.add
-            .text(
-              this.scale.width / 2,
-              this.scale.height / 2 - 50,
-              "Press START to begin",
-              {
-                fontSize: "28px",
+          if (this.retryUsed) {
+            // --- Overlay tekst ---
+            this.startText = this.add
+              .text(
+                this.scale.width / 2,
+                this.scale.height / 2 - 50,
+                "Press START to begin",
+                {
+                  fontSize: "28px",
+                  fill: "#fff",
+                  padding: { x: 12, y: 8 },
+                }
+              )
+              .setOrigin(0.5);
+
+            // --- Start knop (simpele tekstbutton) ---
+            this.startButton = this.add
+              .text(this.scale.width / 2, this.scale.height / 2 + 20, "START", {
+                fontSize: "32px",
                 fill: "#fff",
-                padding: { x: 12, y: 8 },
-              }
-            )
-            .setOrigin(0.5);
-
-          // --- Start knop (simpele tekstbutton) ---
-          this.startButton = this.add
-            .text(this.scale.width / 2, this.scale.height / 2 + 20, "START", {
-              fontSize: "32px",
-              fill: "#fff",
-              backgroundColor: "#6A0DAD", // Pi purple
-              padding: { x: 20, y: 10 },
-            })
-            .setOrigin(0.5)
-            .setInteractive({ useHandCursor: true })
-            .on("pointerdown", () => this.startGame());
-
-          // this.isReady = true;
+                backgroundColor: "#6A0DAD", // Pi purple
+                padding: { x: 20, y: 10 },
+              })
+              .setOrigin(0.5)
+              .setInteractive({ useHandCursor: true })
+              .on("pointerdown", () => this.startGame());
+          } else {
+            this.isReady = true;
+            this.matter.world.enabled = true;
+          }
         }
 
         startGame() {
@@ -744,7 +747,12 @@
                 this.scale.width / 2,
                 this.scale.height / 2,
                 "Retry for 0.1 Pi and keep your current score and streak!",
-                { fontSize: "16px", fill: "#fff", align: "center" }
+                {
+                  fontSize: "24px",
+                  fill: "#fff",
+                  align: "center",
+                  wordWrap: { width: this.scale.width - 100 },
+                }
               )
               .setOrigin(0.5);
 

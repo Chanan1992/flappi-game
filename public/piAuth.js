@@ -101,7 +101,7 @@ async function buyRetry() {
   try {
     await window.Pi.createPayment(
       {
-        amount: 0.5, // bijvoorbeeld halve Pi voor retry
+        amount: 0.1, // bijvoorbeeld halve Pi voor retry
         memo: "Extra retry",
         metadata: { reason: "retry" },
       },
