@@ -234,7 +234,9 @@
 
         async loadScores() {
           try {
-            const response = await fetch("/api/score/leaderboard");
+            const response = await fetch("/api/score/leaderboard", {
+              headers: { Authorization: `Bearer ${PiUser.accessToken}` },
+            });
             const scores = await response.json();
 
             const currentUser = getPiUser().username; // <-- straks uit Pi login
@@ -364,7 +366,9 @@
 
         async fetchLeaderboard() {
           try {
-            const res = await fetch("/api/score/leaderboard");
+            const res = await fetch("/api/score/leaderboard", {
+              headers: { Authorization: `Bearer ${PiUser.accessToken}` },
+            });
             return await res.json();
           } catch (err) {
             console.error("Failed to fetch leaderboard", err);
@@ -581,7 +585,9 @@
 
         async getPlayerHighscore(username) {
           try {
-            const res = await fetch(`/api/score/${username}`);
+            const res = await fetch(`/api/score/${username}`, {
+              headers: { Authorization: `Bearer ${PiUser.accessToken}` },
+            });
             if (!res.ok) throw new Error("Failed to fetch highscore");
             const data = await res.json();
             return data?.score || 0;
@@ -804,6 +810,7 @@
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
+                Authorization: `Bearer ${PiUser.accessToken}`,
               },
               body: JSON.stringify({
                 player: PiUser.username, // hier kun je later Pi-username gebruiken
