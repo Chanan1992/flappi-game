@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const supabase = require('../supabase');
 
-router.post('/', async (req, res) => {
+router.post('/', requirePiAuth, async (req, res) => {
     const { player, score } = req.body;
 
   const { error } = await supabase
@@ -13,7 +13,7 @@ router.post('/', async (req, res) => {
   res.status(201).json({ message: 'Score opgeslagen of bijgewerkt' });
 });
 
-router.get('/leaderboard', async (req, res) => {
+router.get('/leaderboard', requirePiAuth, async (req, res) => {
     const { data, error } = await supabase
         .from('scores')
         .select('*')
@@ -23,7 +23,7 @@ router.get('/leaderboard', async (req, res) => {
 });
 
 // Highscore van 1 speler ophalen
-router.get("/:player", async (req, res) => {
+router.get("/:player", requirePiAuth, async (req, res) => {
   const { player } = req.params;
 
   try {
