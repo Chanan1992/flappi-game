@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const supabase = require('../supabase');
+const requirePiAuth = require("../middleware/requirePiAuth");
 
 router.post('/', requirePiAuth, async (req, res) => {
     const { player, score } = req.body;
