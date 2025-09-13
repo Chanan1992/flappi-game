@@ -401,6 +401,7 @@
         }
 
         async create(data) {
+          this.matter.world.enabled = false;
           this.isReady = false;
 
           this.pipes = []; // Array to manage pipes
@@ -463,7 +464,7 @@
             .setDepth(10);
 
           this.rocket = this.matter.add
-            .sprite(64, 64, "rocket", null, {
+            .sprite(64, 128, "rocket", null, {
               shape: {
                 type: "fromVertices",
                 verts: [
@@ -528,7 +529,42 @@
             this.grantRetry();
           });
 
+          // --- Overlay tekst ---
+          this.startText = this.add
+            .text(
+              this.scale.width / 2,
+              this.scale.height / 2 - 50,
+              "Press START to begin",
+              {
+                fontSize: "28px",
+                fill: "#fff",
+                padding: { x: 12, y: 8 },
+              }
+            )
+            .setOrigin(0.5);
+
+          // --- Start knop (simpele tekstbutton) ---
+          this.startButton = this.add
+            .text(this.scale.width / 2, this.scale.height / 2 + 20, "START", {
+              fontSize: "32px",
+              fill: "#fff",
+              backgroundColor: "#6A0DAD", // Pi purple
+              padding: { x: 20, y: 10 },
+            })
+            .setOrigin(0.5)
+            .setInteractive({ useHandCursor: true })
+            .on("pointerdown", () => this.startGame());
+
+          // this.isReady = true;
+        }
+
+        startGame() {
+          // UI verwijderen
+          this.startText.destroy();
+          this.startButton.destroy();
+
           this.isReady = true;
+          this.matter.world.enabled = true;
         }
 
         grantRetry() {
